@@ -21,16 +21,26 @@ on:
         options:
           - "1.27.2"
           - "1.25.1"
-      #release_archives:
-      #  description: "enable release archives"
-      #  default: true
-      #  type: boolean
+      build_base:
+        description: "enable base build"
+        default: true
+        type: boolean
+      build_core:
+        description: "enable core build"
+        default: true
+        type: boolean
+      release_archives:
+        description: "enable release archives"
+        default: true
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Free Disk-Space
+        run: df -h && sudo apt-get clean && docker system prune -a -f && sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc && df -h
+
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
@@ -47,8 +57,16 @@ jobs:
       - name: init
         run: |
           cp -f ${{ github.workspace }}/conf/nginx.conf ${{ github.workspace }}/mainline/nginx.conf
-          cp -f ${{ github.workspace }}/ngx_http_tls_dyn_size/nginx__dynamic_tls_records_${{ inputs.dyn_tls_version }}+.patch ${{ github.workspace }}/mainline/dynamic_tls_records.patch
-          ls ${{ github.workspace }}/mainline
+          ls ${{ github.workspace }}/mainline/
+
+      - name: get boringssl version
+        run: |
+          mkdir -p ${{ github.workspace }}/build/
+          cd ${{ github.workspace }}/build
+          git clone https://boringssl.googlesource.com/boringssl
+          cd ${{ github.workspace }}/build/boringssl
+          git reset --hard ${{ inputs.ssl_commit_id }}
+          echo "ssl_short_commit_id=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -56,16 +74,41 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build
+      - name: Build And Push (base)
+        if: ${{ inputs.build_base }}
         uses: docker/build-push-action@v6
         with:
-          context: ${{ github.workspace }}/mainline
-          file: Dockerfile
+          context: ${{ github.workspace }}/mainline/
+          file: ${{ github.workspace }}/mainline/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: |
             NGINX_VERSION=${{ inputs.nginx_version }}
-            BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-boringssl,${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl,${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
-          cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
+            BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}
+            DYN_TLS_VERSION=${{ inputs.dyn_tls_version }}
+          push: ${{ inputs.release_archives }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-base-boringssl
+          cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
+          cache-to: type=inline
+
+      - name: Build And Push (core)
+        if: ${{ inputs.build_core }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/mainline/
+          file: ${{ github.workspace }}/mainline/Core.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            NGINX_VERSION=${{ inputs.nginx_version }}-
+            BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}-
+          push: ${{ inputs.release_archives }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-boringssl
+          cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
           cache-to: type=inline

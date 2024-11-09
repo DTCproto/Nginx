@@ -1,16 +1,15 @@
 FROM alpine:latest
 
 ARG NGINX_VERSION
-ENV NGINX_VERSION=${NGINX_VERSION}
 ARG BORINGSSL_COMMIT_ID
-ENV BORINGSSL_COMMIT_ID=${BORINGSSL_COMMIT_ID}
+ARG DYN_TLS_VERSION
 
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
 # '13C82A63B603576156E30A4EA0EA981B66B0D967' # Konstantin Pavlov <thresh@nginx.com>
+ARG GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A
 
-RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
-	&& CONFIG="\
+ARG CONFIG="\
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
 		--modules-path=/usr/lib/nginx/modules \
@@ -24,6 +23,7 @@ RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
 		--http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
 		--http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
 		--http-scgi-temp-path=/var/cache/nginx/scgi_temp \
+		--with-perl_modules_path=/usr/lib/perl5/vendor_perl \
 		--user=nginx \
 		--group=nginx \
 		--with-http_ssl_module \
@@ -59,8 +59,10 @@ RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
 		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/ngx_brotli \
 		--add-dynamic-module=/usr/src/njs/nginx \
-	" \
-	&& addgroup -S nginx \
+	"
+
+RUN \
+	addgroup -S nginx \
 	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
 	&& apk add --no-cache --virtual .build-deps \
 		autoconf \
@@ -92,50 +94,71 @@ RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
 		tzdata \
 		zlib \
 		zlib-dev \
-		mercurial \
-	&& curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx-${NGINX_VERSION}.tar.gz \
-	&& curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc  -o nginx-${NGINX_VERSION}.tar.gz.asc \
-	&& export GNUPGHOME="$(mktemp -d)" \
-	&& found=''; \
-	for server in \
-		ha.pool.sks-keyservers.net \
-		hkp://keyserver.ubuntu.com:80 \
-		hkp://p80.pool.sks-keyservers.net:80 \
-		pgp.mit.edu \
-	; do \
-		echo "Fetching GPG key $GPG_KEYS from $server"; \
-		gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$GPG_KEYS" && found=yes && break; \
-	done; \
-	test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
-	gpg --batch --verify nginx-${NGINX_VERSION}.tar.gz.asc nginx-${NGINX_VERSION}.tar.gz \
+		mercurial 
+
+RUN \
+	curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx-${NGINX_VERSION}.tar.gz \
 	&& mkdir -p /usr/src \
 	&& tar -zxC /usr/src -f nginx-${NGINX_VERSION}.tar.gz \
-	&& rm nginx-${NGINX_VERSION}.tar.gz \
-	&& rm -rf "$GNUPGHOME" nginx-${NGINX_VERSION}.tar.gz.asc \
-	&& git clone --depth=1 --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli \
+	&& rm nginx-${NGINX_VERSION}.tar.gz
+
+RUN \
+	git clone --depth=1 --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli \
 	&& git clone --depth=1 https://github.com/openresty/headers-more-nginx-module /usr/src/ngx_headers_more \
-	&& hg clone http://hg.nginx.org/njs /usr/src/njs \
-	&& (git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
-		&& cd /usr/src/boringssl && git checkout --force --quiet ${BORINGSSL_COMMIT_ID} \
-		&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
-		&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
-		&& mkdir -p /usr/src/boringssl/build \
-		&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		&& make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN) \
-	   ) \
-	&& cd /usr/src/nginx-${NGINX_VERSION} \
-	&& patch -p1 < dynamic_tls_records.patch \
-	&& ./configure $CONFIG --with-debug --with-cc-opt="-I/usr/src/boringssl/include" --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-	&& make -j$(getconf _NPROCESSORS_ONLN) \
+	&& hg clone http://hg.nginx.org/njs /usr/src/njs
+
+RUN \
+	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
+	&& cd /usr/src/boringssl \
+	&& git checkout --force --quiet ${BORINGSSL_COMMIT_ID} \
+	&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
+	&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
+	&& mkdir -p /usr/src/boringssl/build \
+	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+	&& make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& curl -fSL https://raw.githubusercontent.com/DTCproto/Nginx/refs/heads/main/ngx_http_tls_dyn_size/nginx__dynamic_tls_records_${DYN_TLS_VERSION}%2B.patch -o dynamic_tls_records.patch \
+	&& patch -p1 < dynamic_tls_records.patch
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& ./configure ${CONFIG} --with-debug \
+	--with-cc=c++ \
+	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
+	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& make -j$(getconf _NPROCESSORS_ONLN)
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& mv objs/nginx objs/nginx-debug \
 	&& mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
 	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
 	&& mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \
 	&& mv objs/ngx_http_perl_module.so objs/ngx_http_perl_module-debug.so \
-	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
-	&& ./configure $CONFIG --with-cc-opt="-I/usr/src/boringssl/include" --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-	&& make -j$(getconf _NPROCESSORS_ONLN) \
-	&& make install \
+	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& ./configure ${CONFIG} \
+	--with-cc=c++ \
+	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
+	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& make -j$(getconf _NPROCESSORS_ONLN)
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& make install
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& rm -rf /etc/nginx/html/ \
 	&& mkdir /etc/nginx/conf.d/ \
 	&& mkdir /etc/nginx/stream.d/ \
@@ -147,18 +170,23 @@ RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
 	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
 	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
 	&& install -m755 objs/ngx_http_perl_module-debug.so /usr/lib/nginx/modules/ngx_http_perl_module-debug.so \
-	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
-	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& ln -s /usr/lib/nginx/modules /etc/nginx/modules \
 	&& strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
 	&& rm -rf /usr/src/nginx-${NGINX_VERSION} \
-	&& rm -rf /usr/src/boringssl /usr/src/ngx_* /usr/src/njs \
-	\
+	&& rm -rf /usr/src/boringssl /usr/src/ngx_* /usr/src/njs
+
 	# Bring in gettext so we can get `envsubst`, then throw
 	# the rest away. To do this, we need to install `gettext`
 	# then move `envsubst` out of the way so `gettext` can
 	# be deleted completely, then move `envsubst` back.
-	&& apk add --no-cache --virtual .gettext gettext \
+
+RUN \
+	apk add --no-cache --virtual .gettext gettext \
 	&& mv /usr/bin/envsubst /tmp/ \
 	\
 	&& runDeps="$( \
@@ -171,21 +199,23 @@ RUN GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& apk del .build-deps \
 	&& apk del .gettext \
-	&& mv /tmp/envsubst /usr/local/bin/ \
-	\
+	&& mv /tmp/envsubst /usr/local/bin/
+
+RUN \
 	# forward request and error logs to docker log collector
-	&& ln -sf /dev/stdout /var/log/nginx/access.log \
+	ln -sf /dev/stdout /var/log/nginx/access.log \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log
+
+# clean
+RUN \
+	rm -rf /tmp/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-RUN APK_ARCH="$(cat /etc/apk/arch)"
-
-LABEL description="NGINX Docker built top of rolling release BoringSSL" \
+LABEL description="Nginx Docker Build with BoringSSL" \
       maintainer="Custom Auto Build" \
-      openssl="BoringSSL" \
-      nginx="nginx ${NGINX_VERSION}" \
-      arch="$APK_ARCH"
+      openssl="BoringSSL (${BORINGSSL_COMMIT_ID})" \
+      nginx="Nginx (${NGINX_VERSION})"
 
 #EXPOSE 80 443 443/udp
 VOLUME /etc/nginx/conf.d /etc/nginx/stream.d
