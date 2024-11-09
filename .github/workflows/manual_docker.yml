@@ -1,30 +1,71 @@
-# This is a basic workflow to help you get started with Actions
+name: BUILD_NGINX_WITH_BORINGSSL
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      nginx_version:
+        description: "指定nginx版本"
+        required: true
+        default: "1.27.2"
+        type: string
+      ssl_commit_id:
+        description: "指定BoringSSL使用commit id版本"
+        required: true
+        default: "HEAD~0"
+        type: string
+      dyn_tls_version:
+        description: "指定dyn_tls补丁版本"
+        required: true
+        default: "1.27.2"
+        type: choice
+        options:
+          - "1.27.2"
+          - "1.25.1"
+      #release_archives:
+      #  description: "enable release archives"
+      #  default: true
+      #  type: boolean
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install APT dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: git curl wget
+
+      - name: init
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          cp -f ${{ github.workspace }}/conf/nginx.conf ${{ github.workspace }}/mainline/nginx.conf
+          cp -f ${{ github.workspace }}/ngx_http_tls_dyn_size/nginx__dynamic_tls_records_${{ inputs.dyn_tls_version }}+.patch ${{ github.workspace }}/mainline/dynamic_tls_records.patch
+          ls ${{ github.workspace }}/mainline
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/mainline
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            NGINX_VERSION=${{ inputs.nginx_version }}
+            BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-boringssl,${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl,${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
+          cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
+          cache-to: type=inline
