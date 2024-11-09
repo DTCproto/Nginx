@@ -37,9 +37,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [linux/amd64, linux/arm64]
+    # 同一个标签，不能多次push，会强制清空覆盖所有数据
+    # strategy:
+    #   matrix:
+    #     os: [linux/amd64, linux/arm64]
     steps:
       - name: Free Disk-Space
         run: df -h && sudo apt-get clean && docker system prune -a -f && sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc && df -h
@@ -83,7 +84,9 @@ jobs:
         with:
           context: ${{ github.workspace }}/mainline/
           file: ${{ github.workspace }}/mainline/Dockerfile
-          platforms: ${{ matrix.os }}
+          platforms: |
+            linux/amd64
+            linux/arm64
           build-args: |
             NGINX_VERSION=${{ inputs.nginx_version }}
             BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}
@@ -102,7 +105,9 @@ jobs:
         with:
           context: ${{ github.workspace }}/mainline/
           file: ${{ github.workspace }}/mainline/Core.Dockerfile
-          platforms: ${{ matrix.os }}
+          platforms: |
+            linux/amd64
+            linux/arm64
           build-args: |
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             NGINX_VERSION=${{ inputs.nginx_version }}-
