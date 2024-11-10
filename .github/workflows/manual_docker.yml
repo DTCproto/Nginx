@@ -93,9 +93,9 @@ jobs:
             DYN_TLS_VERSION=${{ inputs.dyn_tls_version }}
           push: ${{ inputs.release_archives }}
           tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-base-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-base-boringssl
           cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
           cache-to: type=inline
 
@@ -114,9 +114,9 @@ jobs:
             BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}-
           push: ${{ inputs.release_archives }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-boringssl
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
           cache-from: type=registry,ref=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
           cache-to: type=inline
