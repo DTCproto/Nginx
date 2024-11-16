@@ -130,7 +130,7 @@ RUN \
 
 RUN \
 	cd /usr/src/nginx \
-	&& ./configure ${CONFIG} --with-debug \
+	&& ./auto/configure ${CONFIG} --with-debug \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
@@ -147,7 +147,7 @@ RUN \
 
 RUN \
 	cd /usr/src/nginx \
-	&& ./configure ${CONFIG} \
+	&& ./auto/configure ${CONFIG} \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
