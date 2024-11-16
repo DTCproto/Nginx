@@ -1,8 +1,8 @@
-ARG NGINX_VERSION
+ARG NGINX_COMMIT_ID
 ARG BORINGSSL_COMMIT_ID
 ARG DOCKERHUB_USERNAME
 
-FROM ${DOCKERHUB_USERNAME}/nginx:${NGINX_VERSION}${BORINGSSL_COMMIT_ID}base-boringssl AS builder
+FROM ${DOCKERHUB_USERNAME}/nginx:${NGINX_COMMIT_ID}${BORINGSSL_COMMIT_ID}base-boringssl AS builder
 
 # 生产阶段
 FROM alpine:latest
@@ -19,7 +19,7 @@ RUN \
 WORKDIR /etc/nginx
 
 # 复制文件：从构建阶段复制编译好的二进制文件、配置文件、模块等
-COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=builder /usr/sbin/nginx* /usr/sbin/
 COPY --from=builder /usr/lib/nginx/modules /usr/lib/nginx/modules
 COPY --from=builder /etc/nginx /etc/nginx
 COPY --from=builder /var/log/nginx /var/log/nginx
@@ -80,6 +80,11 @@ RUN \
 
 # 拷贝自定义的 NGINX 配置文件
 COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
+
+LABEL description="Nginx Docker Build with BoringSSL" \
+      maintainer="Custom Auto Build" \
+      openssl="BoringSSL (${BORINGSSL_COMMIT_ID})" \
+      nginx="Nginx (${NGINX_COMMIT_ID})"
 
 # 定义容器暴露的端口
 # EXPOSE 80 443

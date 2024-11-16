@@ -1,15 +1,13 @@
 FROM alpine:latest
 
-ARG NGINX_COMMIT_ID="HEAD~0"
-ARG BORINGSSL_COMMIT_ID="HEAD~0"
-ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
-ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
-ARG NJS_COMMIT_ID="HEAD~0"
+ARG NGINX_VERSION
+ARG BORINGSSL_COMMIT_ID
+ARG DYN_TLS_VERSION
 
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
 # '13C82A63B603576156E30A4EA0EA981B66B0D967' # Konstantin Pavlov <thresh@nginx.com>
-# ARG GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A
+ARG GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A
 
 ARG CONFIG="\
 		--prefix=/etc/nginx \
@@ -64,8 +62,7 @@ ARG CONFIG="\
 	"
 
 RUN \
-	mkdir -p /usr/src \
-	&& addgroup -S nginx \
+	addgroup -S nginx \
 	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
 	&& apk add --no-cache --virtual .build-deps \
 		autoconf \
@@ -96,27 +93,19 @@ RUN \
 		tar \
 		tzdata \
 		zlib \
-		zlib-dev 
+		zlib-dev \
+		mercurial 
 
 RUN \
-	git clone https://github.com/nginx/nginx /usr/src/nginx \
-	&& cd /usr/src/nginx \
-	&& git checkout --force --quiet ${NGINX_COMMIT_ID}
+	curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx-${NGINX_VERSION}.tar.gz \
+	&& mkdir -p /usr/src \
+	&& tar -zxC /usr/src -f nginx-${NGINX_VERSION}.tar.gz \
+	&& rm nginx-${NGINX_VERSION}.tar.gz
 
 RUN \
-	git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli \
-	&& cd /usr/src/ngx_brotli \
-	&& git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID}
-
-RUN \
-	git clone https://github.com/openresty/headers-more-nginx-module /usr/src/ngx_headers_more \
-	&& cd /usr/src/ngx_headers_more \
-	&& git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID}
-
-RUN \
-	git clone https://github.com/nginx/njs /usr/src/njs \
-	&& cd /usr/src/njs \
-	&& git checkout --force --quiet ${NJS_COMMIT_ID}
+	git clone --depth=1 --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli \
+	&& git clone --depth=1 https://github.com/openresty/headers-more-nginx-module /usr/src/ngx_headers_more \
+	&& hg clone http://hg.nginx.org/njs /usr/src/njs
 
 RUN \
 	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
@@ -129,15 +118,23 @@ RUN \
 	&& make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
+	&& curl -fSL https://raw.githubusercontent.com/DTCproto/Nginx/refs/heads/main/ngx_http_tls_dyn_size/nginx__dynamic_tls_records_${DYN_TLS_VERSION}%2B.patch -o dynamic_tls_records.patch \
+	&& patch -p1 < dynamic_tls_records.patch
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& ./configure ${CONFIG} --with-debug \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
-	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
+	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& make -j$(getconf _NPROCESSORS_ONLN)
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& mv objs/nginx objs/nginx-debug \
 	&& mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
 	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
@@ -146,19 +143,22 @@ RUN \
 	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& ./configure ${CONFIG} \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
-	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
+	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+
+RUN \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& make -j$(getconf _NPROCESSORS_ONLN)
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& make install
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& rm -rf /etc/nginx/html/ \
 	&& mkdir /etc/nginx/conf.d/ \
 	&& mkdir /etc/nginx/stream.d/ \
@@ -173,12 +173,17 @@ RUN \
 	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so
 
 RUN \
-	cd /usr/src/nginx \
+	cd /usr/src/nginx-${NGINX_VERSION} \
 	&& ln -s /usr/lib/nginx/modules /etc/nginx/modules \
 	&& strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
-	&& rm -rf /usr/src/nginx \
+	&& rm -rf /usr/src/nginx-${NGINX_VERSION} \
 	&& rm -rf /usr/src/boringssl /usr/src/ngx_* /usr/src/njs
+
+	# Bring in gettext so we can get `envsubst`, then throw
+	# the rest away. To do this, we need to install `gettext`
+	# then move `envsubst` out of the way so `gettext` can
+	# be deleted completely, then move `envsubst` back.
 
 RUN \
 	apk add --no-cache --virtual .gettext gettext \
@@ -210,7 +215,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 LABEL description="Nginx Docker Build with BoringSSL" \
       maintainer="Custom Auto Build" \
       openssl="BoringSSL (${BORINGSSL_COMMIT_ID})" \
-      nginx="Nginx (${NGINX_COMMIT_ID})"
+      nginx="Nginx (${NGINX_VERSION})"
 
 # 定义容器暴露的端口
 # EXPOSE 80 443
