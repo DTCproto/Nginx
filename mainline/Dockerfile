@@ -163,8 +163,8 @@ RUN \
 	&& mkdir /etc/nginx/conf.d/ \
 	&& mkdir /etc/nginx/stream.d/ \
 	&& mkdir -p /usr/share/nginx/html/ \
-	&& install -m644 html/index.html /usr/share/nginx/html/ \
-	&& install -m644 html/50x.html /usr/share/nginx/html/ \
+	&& install -m644 docs/html/index.html /usr/share/nginx/html/ \
+	&& install -m644 docs/html/50x.html /usr/share/nginx/html/ \
 	&& install -m755 objs/nginx-debug /usr/sbin/nginx-debug \
 	&& install -m755 objs/ngx_http_xslt_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_xslt_filter_module-debug.so \
 	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
