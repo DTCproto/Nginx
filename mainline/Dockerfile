@@ -5,6 +5,7 @@ ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
 ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
 ARG NJS_COMMIT_ID="HEAD~0"
+ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
@@ -61,6 +62,7 @@ ARG CONFIG="\
 		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/ngx_brotli \
 		--add-dynamic-module=/usr/src/njs/nginx \
+		--add-dynamic-module=/usr/src/brutal-nginx \
 	"
 
 RUN \
@@ -119,6 +121,11 @@ RUN \
 	&& git checkout --force --quiet ${NJS_COMMIT_ID}
 
 RUN \
+	git clone https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx \
+	&& cd /usr/src/brutal-nginx \
+	&& git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}
+
+RUN \
 	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
 	&& cd /usr/src/boringssl \
 	&& git checkout --force --quiet ${BORINGSSL_COMMIT_ID} \
@@ -143,7 +150,8 @@ RUN \
 	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
 	&& mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \
 	&& mv objs/ngx_http_perl_module.so objs/ngx_http_perl_module-debug.so \
-	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so
+	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
+	&& mv objs/ngx_http_tcp_brutal_module.so objs/ngx_http_tcp_brutal_module-debug.so
 
 RUN \
 	cd /usr/src/nginx \
@@ -170,7 +178,8 @@ RUN \
 	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
 	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
 	&& install -m755 objs/ngx_http_perl_module-debug.so /usr/lib/nginx/modules/ngx_http_perl_module-debug.so \
-	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so
+	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
+	&& install -m755 objs/ngx_http_tcp_brutal_module-debug.so /usr/lib/nginx/modules/ngx_http_tcp_brutal_module-debug.so
 
 RUN \
 	cd /usr/src/nginx \
