@@ -1,7 +1,7 @@
 # fork src
 [docker-nginx-boringssl](https://github.com/nginx-modules/docker-nginx-boringssl)
 
-# 链接器切换
+# 一、链接器切换
 
 ### 异常信息
 
@@ -43,4 +43,45 @@ use a C++ linker rather than a C linker.
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+```
+
+# 二、QEMU指定(V8+)版本
+
+### 异常信息
+
+```
+[CMakeFiles/fipsmodule.dir/build.make:677: CMakeFiles/fipsmodule.dir/gen/bcm/p256-armv8-asm-apple.S.o] Segmentation fault (core dumped)
+```
+
+### 原因
+
+[tonistiigi/binfmt issues 215](https://github.com/tonistiigi/binfmt/issues/215)
+
+```
+tonistiigi/binfmt V7 platform=arm64 与最新的 Ubuntu24.04 不兼容
+```
+
+### 解决办法
+
+[nginx-ticket-2605](https://trac.nginx.org/nginx/ticket/2605)
+
+```
+- name: Set up QEMU
+  uses: docker/setup-qemu-action@v3
+```
+
+修改为：
+
+```
+- name: Set up QEMU
+  uses: docker/setup-qemu-action@v3
+  with:
+    image: tonistiigi/binfmt:qemu-v8.1.5
+```
+
+```
+- name: Set up QEMU
+  uses: docker/setup-qemu-action@v3
+  with:
+    image: tonistiigi/binfmt:qemu-v9.2.0
 ```
