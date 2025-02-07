@@ -5,7 +5,7 @@
 
 ### 异常信息
 
-```
+```log
 ./configure: error: SSL modules require the OpenSSL library.
 You can either do not enable the modules, or install the OpenSSL library
 into the system, or build the OpenSSL library statically from the source
@@ -16,7 +16,7 @@ with Angie by using --with-openssl=<path> option.
 
 [boringssl-commit-c528061](https://github.com/google/boringssl/commit/c52806157c97105da7fdc2b021d0a0fcd5186bf3)
 
-```
+```text
 libssl now requires a C++ runtime, in addition to the
 pre-existing C++ requirement. Contact the BoringSSL team if this
 causes an issue. Some projects may need to switch the final link to
@@ -30,7 +30,7 @@ use a C++ linker rather than a C linker.
 
 [nginx-ticket-2605](https://trac.nginx.org/nginx/ticket/2605)
 
-```
+```shell
 ./configure \
 	--with-cc-opt="-I/usr/src/boringssl/include" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
@@ -38,18 +38,18 @@ use a C++ linker rather than a C linker.
 
 修改为：
 
-```
+```shell
 ./configure \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
 ```
 
-# 二、QEMU指定(V8+)版本
+# 二、QEMU binfmt指定(V8+)版本
 
 ### 异常信息
 
-```
+```log
 [CMakeFiles/fipsmodule.dir/build.make:677: CMakeFiles/fipsmodule.dir/gen/bcm/p256-armv8-asm-apple.S.o] Segmentation fault (core dumped)
 ```
 
@@ -57,29 +57,31 @@ use a C++ linker rather than a C linker.
 
 [tonistiigi/binfmt issues 215](https://github.com/tonistiigi/binfmt/issues/215)
 
-```
+```log
 tonistiigi/binfmt V7 platform=arm64 与最新的 Ubuntu24.04 不兼容
 ```
 
 ### 解决办法
 
-[nginx-ticket-2605](https://trac.nginx.org/nginx/ticket/2605)
-
+```text
+指定binfmt(V8+)版本
 ```
+
+```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3
 ```
 
 修改为：
 
-```
+```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3
   with:
     image: tonistiigi/binfmt:qemu-v8.1.5
 ```
 
-```
+```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3
   with:
