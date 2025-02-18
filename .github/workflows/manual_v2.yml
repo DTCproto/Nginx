@@ -11,7 +11,7 @@ on:
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
-        default: "0.20250114.0"
+        default: "0.20250212.0"
         type: string
       ngx_brotli_commit_id:
         description: "指定ngx_brotli使用commit id版本"
