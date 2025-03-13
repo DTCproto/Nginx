@@ -126,6 +126,7 @@ RUN \
 	&& git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}
 
 # CMAKE_BUILD_TYPE: Debug, Release, RelWithDebInfo, MinSizeRel
+# -j$(getconf _NPROCESSORS_ONLN) | -j"$(nproc)"
 RUN \
 	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
 	&& cd /usr/src/boringssl \
@@ -133,19 +134,17 @@ RUN \
 #	&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
 #	&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
 	&& mkdir -p /usr/src/boringssl/build \
-	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=Release \
-	&& make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
+	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-O3" \
+#	&& make -C/usr/src/boringssl/build -j"$(nproc)"
+	&& cmake --build /usr/src/boringssl/build --parallel $(nproc)
 
 RUN \
 	cd /usr/src/nginx \
 	&& ./auto/configure ${CONFIG} \
 	--with-cc=c++ \
-	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
+	--with-cc-opt="-O3 -I/usr/src/boringssl/include -x c" \
 	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-	&& make -j$(getconf _NPROCESSORS_ONLN)
-
-RUN \
-	cd /usr/src/nginx \
+	&& make -j"$(nproc)" \
 	&& make install
 
 RUN \
