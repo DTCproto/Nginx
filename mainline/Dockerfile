@@ -72,11 +72,13 @@ RUN \
 	&& apk add --no-cache --virtual .build-deps \
 		autoconf \
 		automake \
+		make \
+		cmake \
+		ninja \
 		bind-tools \
 		binutils \
 		build-base \
 		ca-certificates \
-		cmake \
 		curl \
 		gcc \
 		gd-dev \
@@ -90,7 +92,6 @@ RUN \
 		libtool \
 		libxslt-dev \
 		linux-headers \
-		make \
 		pcre \
 		pcre-dev \
 		perl-dev \
@@ -134,8 +135,10 @@ RUN \
 #	&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
 #	&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
 	&& mkdir -p /usr/src/boringssl/build \
-	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-O3" \
+#	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-O3" \
 #	&& make -C/usr/src/boringssl/build -j"$(nproc)"
+	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-O3" \
+#	&& ninja -C /usr/src/boringssl/build
 	&& cmake --build /usr/src/boringssl/build --parallel $(nproc)
 
 RUN \
