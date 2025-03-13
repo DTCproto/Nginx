@@ -125,33 +125,16 @@ RUN \
 	&& cd /usr/src/brutal-nginx \
 	&& git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}
 
+# CMAKE_BUILD_TYPE: Debug, Release, RelWithDebInfo, MinSizeRel
 RUN \
 	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
 	&& cd /usr/src/boringssl \
 	&& git checkout --force --quiet ${BORINGSSL_COMMIT_ID} \
-	&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
-	&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
+#	&& (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
+#	&& (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
 	&& mkdir -p /usr/src/boringssl/build \
-	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+	&& cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=Release \
 	&& make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
-
-RUN \
-	cd /usr/src/nginx \
-	&& ./auto/configure ${CONFIG} --with-debug \
-	--with-cc=c++ \
-	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
-	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-	&& make -j$(getconf _NPROCESSORS_ONLN)
-
-RUN \
-	cd /usr/src/nginx \
-	&& mv objs/nginx objs/nginx-debug \
-	&& mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
-	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
-	&& mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \
-	&& mv objs/ngx_http_perl_module.so objs/ngx_http_perl_module-debug.so \
-	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
-	&& mv objs/ngx_http_tcp_brutal_module.so objs/ngx_http_tcp_brutal_module-debug.so
 
 RUN \
 	cd /usr/src/nginx \
@@ -172,14 +155,7 @@ RUN \
 	&& mkdir /etc/nginx/stream.d/ \
 	&& mkdir -p /usr/share/nginx/html/ \
 	&& install -m644 docs/html/index.html /usr/share/nginx/html/ \
-	&& install -m644 docs/html/50x.html /usr/share/nginx/html/ \
-	&& install -m755 objs/nginx-debug /usr/sbin/nginx-debug \
-	&& install -m755 objs/ngx_http_xslt_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_xslt_filter_module-debug.so \
-	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
-	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
-	&& install -m755 objs/ngx_http_perl_module-debug.so /usr/lib/nginx/modules/ngx_http_perl_module-debug.so \
-	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
-	&& install -m755 objs/ngx_http_tcp_brutal_module-debug.so /usr/lib/nginx/modules/ngx_http_tcp_brutal_module-debug.so
+	&& install -m644 docs/html/50x.html /usr/share/nginx/html/ 
 
 RUN \
 	cd /usr/src/nginx \
@@ -212,7 +188,7 @@ RUN \
 
 # clean
 RUN \
-	rm -rf /tmp/*
+	rm -rf /tmp/* /usr/src/* /var/cache/apk/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
 

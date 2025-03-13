@@ -81,6 +81,10 @@ RUN \
 # 拷贝自定义的 NGINX 配置文件
 COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
 
+# clean
+RUN \
+	rm -rf /tmp/* /var/cache/apk/*
+
 LABEL description="Nginx Docker Build with BoringSSL" \
       maintainer="Custom Auto Build" \
       openssl="BoringSSL (${BORINGSSL_COMMIT_ID})" \
