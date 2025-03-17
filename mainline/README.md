@@ -88,7 +88,7 @@ tonistiigi/binfmt V7 platform=arm64 与最新的 Ubuntu24.04 不兼容
     image: tonistiigi/binfmt:qemu-v9.2.0
 ```
 
-# 二、QEMU binfmt指定(V8+)版本
+# 三、NJS编译为外部静态库模块时，需要LibSSL使用共享库
 
 ### 异常信息
 
