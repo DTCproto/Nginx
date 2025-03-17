@@ -1,33 +1,48 @@
-ARG BASE_IMAGE
-ARG NGINX_COMMIT_ID
-ARG BORINGSSL_COMMIT_ID
+ARG BASE_IMAGE="alpine:latest"
 
 FROM ${BASE_IMAGE} AS builder
 
 # 生产阶段
 FROM alpine:latest
 
+ARG NGINX_COMMIT_ID="HEAD~0"
+ARG BORINGSSL_COMMIT_ID="HEAD~0"
+
 # 安装运行时依赖
-RUN \
-    apk update && \
-    apk upgrade && \
+RUN set -eux; \
+	addgroup -S nginx; \
+	adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
     apk add --no-cache \
     tzdata \
-    ca-certificates
+    ca-certificates \
+    ;
 
 # 配置环境变量和工作目录
 WORKDIR /etc/nginx
 
 # 复制文件：从构建阶段复制编译好的二进制文件、配置文件、模块等
-COPY --from=builder /usr/sbin/nginx* /usr/sbin/
-COPY --from=builder /usr/lib/nginx/modules /usr/lib/nginx/modules
+COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /etc/nginx /etc/nginx
 COPY --from=builder /var/log/nginx /var/log/nginx
+COPY --from=builder /usr/share/nginx /usr/share/nginx
+
+COPY --from=builder /usr/lib/nginx/modules/ngx_http_brotli_static_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so* /usr/lib/nginx/modules/
+COPY --from=builder /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_image_filter_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_geoip_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_stream_geoip_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_perl_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_http_js_module.so* /usr/lib/nginx/modules/
+# COPY --from=builder /usr/lib/nginx/modules/ngx_stream_js_module.so* /usr/lib/nginx/modules/
 
 # 依赖列表 base
-COPY --from=builder /usr/lib/libpcre.so* /usr/lib/
+COPY --from=builder /usr/lib/libpcre2-8.so* /usr/lib/
 COPY --from=builder /usr/lib/libstdc++.so* /usr/lib/
 COPY --from=builder /usr/lib/libgcc_s.so* /usr/lib/
+COPY --from=builder /usr/local/lib/libssl.so* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libcrypto.so* /usr/local/lib/
 
 # 依赖列表 load_module modules/ngx_http_brotli_filter_module.so;
 COPY --from=builder /usr/lib/libbrotlicommon.so* /usr/lib/
@@ -62,6 +77,7 @@ COPY --from=builder /usr/lib/libbrotlidec.so* /usr/lib/
 # COPY --from=builder /usr/lib/libxcb* /usr/lib/
 
 # 依赖列表 load_module modules/ngx_http_xslt_filter_module.so;
+# 依赖列表 load_module modules/ngx_http_js_module.so modules/ngx_stream_js_module.so;
 # COPY --from=builder /usr/lib/libxml2.so* /usr/lib/
 # COPY --from=builder /usr/lib/libxslt.so* /usr/lib/
 # COPY --from=builder /usr/lib/libexslt.so* /usr/lib/
@@ -70,20 +86,24 @@ COPY --from=builder /usr/lib/libbrotlidec.so* /usr/lib/
 # COPY --from=builder /usr/lib/libgpg-error.so* /usr/lib/
 # /usr/lib/libxslt-plugins
 
-# 创建 nginx 用户
-# 将 NGINX 运行日志指向 Docker 日志收集系统
-RUN \
-    addgroup -S nginx \
-    && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
-    && ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log
+# 依赖列表 load_module modules/ngx_http_perl_module.so;
+# COPY --from=builder /usr/lib/perl5 /usr/lib/perl5
+# COPY --from=builder /usr/share/perl5 /usr/share/perl5
 
 # 拷贝自定义的 NGINX 配置文件
+# COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
 
+# ssl lib
+RUN set -eux; \
+    rm -rf /usr/lib/libssl.so* /usr/lib/libcrypto.so*; \
+    ln -s /usr/local/lib/libssl.so /usr/lib/libssl.so; \
+    ln -s /usr/local/lib/libcrypto.so /usr/lib/libcrypto.so;
+
 # clean
-RUN \
-	rm -rf /tmp/* /var/cache/apk/*
+RUN set -eux; \
+    # 按需减小体积
+	rm -rf /tmp/* /var/cache/apk/*;
 
 LABEL description="Nginx Docker Build with BoringSSL" \
       maintainer="Custom Auto Build" \

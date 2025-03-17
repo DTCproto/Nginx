@@ -112,7 +112,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/mainline/
-          file: ${{ github.workspace }}/mainline/Dockerfile
+          file: ${{ github.workspace }}/mainline/V2.Dockerfile
           platforms: |
             linux/amd64
             linux/arm64
