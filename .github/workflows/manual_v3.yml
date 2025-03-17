@@ -84,7 +84,7 @@ jobs:
 
       - name: init
         run: |
-          cp -f ${{ github.workspace }}/conf/nginx.conf ${{ github.workspace }}/mainline/nginx.conf
+          cp -rf ${{ github.workspace }}/conf/* ${{ github.workspace }}/mainline/
           ls ${{ github.workspace }}/mainline/
 
       - name: Login to Docker Hub
@@ -135,11 +135,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.ssl_commit_id }}-boringssl-base
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-base
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-base-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
             ghcr.io/${{ env.REPOSITORY_LC }}:${{ inputs.ssl_commit_id }}-boringssl-base
             ghcr.io/${{ env.REPOSITORY_LC }}:boringssl-base
             ghcr.io/${{ env.REPOSITORY_LC }}:boringssl-base-latest
-            ghcr.io/${{ env.REPOSITORY_LC }}:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY_LC }}:boringssl-base-latest
           cache-to: type=inline
 
