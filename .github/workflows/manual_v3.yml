@@ -192,12 +192,12 @@ jobs:
           provenance: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:nginx
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:nginx-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
             ghcr.io/${{ env.REPOSITORY_LC }}:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
             ghcr.io/${{ env.REPOSITORY_LC }}:boringssl
             ghcr.io/${{ env.REPOSITORY_LC }}:boringssl-latest
             ghcr.io/${{ env.REPOSITORY_LC }}:latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY_LC }}:base-boringssl-bpringssl-latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY_LC }}:boringssl-latest
           cache-to: type=inline
