@@ -85,7 +85,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/mainline/
-          file: ${{ github.workspace }}/mainline/Dyn.Dockerfile
+          file: ${{ github.workspace }}/mainline/V1-Dyn.Dockerfile
           platforms: |
             linux/amd64
             linux/arm64
@@ -93,7 +93,8 @@ jobs:
             NGINX_VERSION=${{ inputs.nginx_version }}
             BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}
             DYN_TLS_VERSION=${{ inputs.dyn_tls_version }}
-          push: ${{ inputs.release_archives }}
+        # push: ${{ inputs.release_archives }}
+          push: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-base-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl
@@ -102,7 +103,8 @@ jobs:
           cache-to: type=inline
 
       - name: Build And Push (core)
-        if: ${{ inputs.build_core }}
+      # if: ${{ inputs.build_core }}
+        if: false
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/mainline/
@@ -114,7 +116,8 @@ jobs:
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             NGINX_COMMIT_ID=${{ inputs.nginx_version }}-
             BORINGSSL_COMMIT_ID=${{ env.ssl_short_commit_id }}-
-          push: ${{ inputs.release_archives }}
+        # push: ${{ inputs.release_archives }}
+          push: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_version }}-${{ env.ssl_short_commit_id }}-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl

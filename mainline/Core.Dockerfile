@@ -15,6 +15,7 @@ RUN set -eux; \
     apk add --no-cache \
     tzdata \
     ca-certificates \
+    bash \
     ;
 
 # 配置环境变量和工作目录
@@ -91,14 +92,16 @@ COPY --from=builder /usr/lib/libbrotlidec.so* /usr/lib/
 # COPY --from=builder /usr/share/perl5 /usr/share/perl5
 
 # 拷贝自定义的 NGINX 配置文件
-# COPY nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
+# COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
+# COPY --from=builder /etc/nginx/start.sh /etc/nginx/start.sh
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh /etc/nginx/start.sh
 
-# ssl lib
-RUN set -eux; \
-    rm -rf /usr/lib/libssl.so* /usr/lib/libcrypto.so*; \
-    ln -s /usr/local/lib/libssl.so /usr/lib/libssl.so; \
-    ln -s /usr/local/lib/libcrypto.so /usr/lib/libcrypto.so;
+# ssl lib(警告：会导致默认的alpine包命令异常)
+#RUN set -eux; \
+#    rm -rf /usr/lib/libssl.so* /usr/lib/libcrypto.so*; \
+#    ln -s /usr/local/lib/libssl.so /usr/lib/libssl.so; \
+#    ln -s /usr/local/lib/libcrypto.so /usr/lib/libcrypto.so;
 
 # clean
 RUN set -eux; \
@@ -116,5 +119,10 @@ LABEL description="Nginx Docker Build with BoringSSL" \
 # 挂载 NGINX 配置和站点目录
 VOLUME /etc/nginx/conf.d /etc/nginx/stream.d
 
+STOPSIGNAL SIGTERM
+
 # 设置容器启动命令
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/bin/bash", "/etc/nginx/start.sh"]
+
+# 设置容器启动命令(ENTRYPOIN[]的默认参数)
+CMD ["-g", "daemon off;"]

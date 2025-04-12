@@ -183,6 +183,8 @@ VOLUME /etc/nginx/conf.d /etc/nginx/stream.d
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/etc/nginx/start.sh"]
+# 设置容器启动命令
+ENTRYPOINT ["/bin/bash", "/etc/nginx/start.sh"]
 
-CMD ["nginx", "-g", "daemon off;"]
+# 设置容器启动命令(ENTRYPOIN[]的默认参数)
+CMD ["-g", "daemon off;"]

@@ -122,7 +122,8 @@ jobs:
             NGX_BROTLI_COMMIT_ID=${{ inputs.ngx_brotli_commit_id }}
             NGX_HEADERS_MORE_COMMIT_ID=${{ inputs.ngx_headers_more_commit_id }}
             NJS_COMMIT_ID=${{ inputs.njs_commit_id }}
-          push: ${{ inputs.release_archives }}
+        # push: ${{ inputs.release_archives }}
+          push: false
           provenance: false
           #tags: ${{ steps.meta.outputs.tags }}
           #labels: ${{ steps.meta.outputs.labels }}
@@ -138,7 +139,8 @@ jobs:
           cache-to: type=inline
 
       - name: Build And Push (core)
-        if: ${{ inputs.build_core }}
+      #  if: ${{ inputs.build_core }}
+        if: false
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/mainline/
@@ -151,7 +153,8 @@ jobs:
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
             BASE_IMAGE=ghcr.io/${{ env.REPOSITORY_LC }}:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
       #     BASE_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
-          push: ${{ inputs.release_archives }}
+        #  push: ${{ inputs.release_archives }}
+          push: false
           provenance: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
