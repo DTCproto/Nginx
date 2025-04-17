@@ -111,11 +111,19 @@ RUN set -eux; \
 	cd /usr/src/ngx_headers_more; \
 	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID};
 
+# RUN set -eux; \
+#	git clone https://github.com/bellard/quickjs /usr/src/quickjs; \
+#	cd /usr/src/quickjs; \
+#	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
+#	mkdir -p build; \
+#	CFLAGS='-O3 -fPIC' make build/libquickjs.a;
+
 RUN set -eux; \
-	git clone https://github.com/bellard/quickjs /usr/src/quickjs; \
+	git clone https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
-	CFLAGS='-O3 -fPIC' make libquickjs.a;
+	CFLAGS="-O3 -fPIC" cmake -B build; \
+	cmake --build build --target qjs -j $(nproc);
 
 RUN set -eux; \
 	git clone https://github.com/nginx/njs /usr/src/njs; \
@@ -132,7 +140,7 @@ RUN set -eux; \
 	./auto/configure ${NGINX_CONFIG} \
 	--with-cc=c++ \
 	--with-cc-opt="-O3 -fPIC -I/usr/local/include -I/usr/src/quickjs -x c" \
-	--with-ld-opt="-L/usr/local/lib -L/usr/src/quickjs"; \
+	--with-ld-opt="-L/usr/local/lib -L/usr/src/quickjs/build"; \
 	make -j"$(nproc)"; \
 	make install;
 
