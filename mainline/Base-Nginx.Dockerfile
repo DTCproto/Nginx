@@ -15,6 +15,8 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 # '13C82A63B603576156E30A4EA0EA981B66B0D967' # Konstantin Pavlov <thresh@nginx.com>
 # ARG GPG_KEYS=D6786CE303D9A9022998DC6CC8464D549AF75C0A
 
+# https://github.com/nginx/ci-self-hosted/blob/main/.github/workflows/nginx-buildbot.yml
+
 ARG NGINX_CONFIG="\
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
@@ -45,23 +47,23 @@ ARG NGINX_CONFIG="\
 		--with-http_secure_link_module \
 		--with-http_stub_status_module \
 		--with-http_auth_request_module \
-		--with-http_xslt_module=dynamic \
-		--with-http_image_filter_module=dynamic \
-		--with-http_geoip_module=dynamic \
-		--with-http_perl_module=dynamic \
-		--with-threads \
+		--with-http_slice_module \
+		--with-http_v2_module \
+		--with-http_v3_module \
 		--with-stream \
 		--with-stream_ssl_module \
 		--with-stream_ssl_preread_module \
 		--with-stream_realip_module \
-		--with-stream_geoip_module=dynamic \
-		--with-http_slice_module \
 		--with-mail \
 		--with-mail_ssl_module \
+		--with-threads \
 		--with-compat \
 		--with-file-aio \
-		--with-http_v2_module \
-		--with-http_v3_module \
+		--with-http_xslt_module=dynamic \
+		--with-http_perl_module=dynamic \
+		--with-http_image_filter_module=dynamic \
+		--with-http_geoip_module=dynamic \
+		--with-stream_geoip_module=dynamic \
 		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/ngx_brotli \
 		--add-dynamic-module=/usr/src/njs/nginx \
