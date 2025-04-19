@@ -10,6 +10,13 @@ ARG NJS_COMMIT_ID="HEAD~0"
 ARG QUICKJS_COMMIT_ID="HEAD~0"
 ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
+# nginx:alpine nginx -V
+
+ARG NGINX_CC_OPT="-O2 -fstack-clash-protection -Wformat -Werror=format-security -fno-plt"
+ARG NGINX_LD_OPT="-Wl,--as-needed,-O2,--sort-common -Wl,-z,pack-relative-relocs"
+
+ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
+
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
 # '13C82A63B603576156E30A4EA0EA981B66B0D967' # Konstantin Pavlov <thresh@nginx.com>
@@ -17,10 +24,10 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 # https://github.com/nginx/ci-self-hosted/blob/main/.github/workflows/nginx-buildbot.yml
 
-ARG NGINX_CONFIG="\
+ARG NGINX_BASE_CONFIG="\
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
-		--modules-path=/usr/lib/nginx/modules \
+		--modules-path=${NGINX_MODULES_PATH} \
 		--conf-path=/etc/nginx/nginx.conf \
 		--error-log-path=/var/log/nginx/error.log \
 		--http-log-path=/var/log/nginx/access.log \
@@ -34,9 +41,11 @@ ARG NGINX_CONFIG="\
 		--with-perl_modules_path=/usr/lib/perl5/vendor_perl \
 		--user=nginx \
 		--group=nginx \
-		--with-http_ssl_module \
-		--with-http_realip_module \
+	"
+
+ARG NGINX_CORE_MODULES="\
 		--with-http_addition_module \
+		--with-http_auth_request_module \
 		--with-http_sub_module \
 		--with-http_dav_module \
 		--with-http_flv_module \
@@ -46,10 +55,11 @@ ARG NGINX_CONFIG="\
 		--with-http_random_index_module \
 		--with-http_secure_link_module \
 		--with-http_stub_status_module \
-		--with-http_auth_request_module \
 		--with-http_slice_module \
 		--with-http_v2_module \
 		--with-http_v3_module \
+		--with-http_ssl_module \
+		--with-http_realip_module \
 		--with-stream \
 		--with-stream_ssl_module \
 		--with-stream_ssl_preread_module \
@@ -59,6 +69,9 @@ ARG NGINX_CONFIG="\
 		--with-threads \
 		--with-compat \
 		--with-file-aio \
+	"
+
+ARG NGINX_DYNAMIC_MODULES="\
 		--with-http_xslt_module=dynamic \
 		--with-http_perl_module=dynamic \
 		--with-http_image_filter_module=dynamic \
@@ -118,13 +131,13 @@ RUN set -eux; \
 #	cd /usr/src/quickjs; \
 #	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
 #	mkdir -p build; \
-#	CFLAGS='-O3 -fPIC' make build/libquickjs.a;
+#	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
 
 RUN set -eux; \
 	git clone https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
-	CFLAGS="-O3 -fPIC" cmake -B build; \
+	CFLAGS="-O2 -fPIC" cmake -B build; \
 	cmake --build build --target qjs -j $(nproc);
 
 RUN set -eux; \
@@ -137,12 +150,16 @@ RUN set -eux; \
 	cd /usr/src/brutal-nginx; \
 	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID};
 
+# Nginx不作为被依赖的共享库，无需-fPIC
+# Nginx Core + Dynamic Modules
+# 分开编译会导致部分模块加载异常(例如ngx_http_perl_module)
 RUN set -eux; \
 	cd /usr/src/nginx; \
-	./auto/configure ${NGINX_CONFIG} \
+	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} \
+	--build="nginx-core" \
 	--with-cc=c++ \
-	--with-cc-opt="-O3 -fPIC -I/usr/local/include -I/usr/src/quickjs -x c" \
-	--with-ld-opt="-L/usr/local/lib -L/usr/src/quickjs/build"; \
+	--with-cc-opt="${NGINX_CC_OPT} -I/usr/local/include -I/usr/src/quickjs -x c" \
+	--with-ld-opt="${NGINX_LD_OPT} -L/usr/local/lib -L/usr/src/quickjs/build"; \
 	make -j"$(nproc)"; \
 	make install;
 
