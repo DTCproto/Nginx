@@ -39,7 +39,7 @@ COPY --from=builder /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.s
 # COPY --from=builder /usr/lib/nginx/modules/ngx_stream_js_module.so* /usr/lib/nginx/modules/
 
 # 依赖列表 base
-COPY --from=builder /usr/lib/libpcre2-8.so* /usr/lib/
+COPY --from=builder /usr/lib/libpcre2* /usr/lib/
 COPY --from=builder /usr/lib/libstdc++.so* /usr/lib/
 COPY --from=builder /usr/lib/libgcc_s.so* /usr/lib/
 COPY --from=builder /usr/local/lib/libssl.so* /usr/local/lib/
