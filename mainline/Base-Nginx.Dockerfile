@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="alpine:latest"
+ARG BASE_IMAGE="gcc:15"
 
 FROM ${BASE_IMAGE} AS builder
 
@@ -83,33 +83,35 @@ ARG NGINX_DYNAMIC_MODULES="\
 		--add-dynamic-module=/usr/src/brutal-nginx \
 	"
 
+# gnupg 仅在验证 GPG 签名时需要
+
 RUN set -eux; \
-	mkdir -p /usr/src; \
-	addgroup -S nginx; \
-	adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
-	apk add --no-cache --virtual build-deps \
+#	addgroup -S nginx; \
+#	adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
+	groupadd -r nginx; \
+	useradd -r -g nginx -s /sbin/nologin -d /var/cache/nginx nginx; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive \
+	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		tzdata \
-		gnupg \
+		git \
 		make \
 		cmake \
-		ninja \
-		gcc \
-		git \
-		build-base \
-		libc-dev \
-		libgcc \
-		libstdc++ \
-		gd-dev \
-		geoip-dev \
-		libxslt-dev \
-		libxml2-dev \
-		linux-headers \
-		pcre2-dev \
-		perl-dev \
+		ninja-build \
+		libtool \
 		bash \
-		zlib-dev \
-		;
+		build-essential \
+		libgd-dev \
+		libgeoip-dev \
+		libxslt1-dev \
+		libxml2-dev \
+		libpcre2-dev \
+		zlib1g-dev \
+		libperl-dev \
+		; \
+    rm -rf /var/lib/apt/lists/*; \
+	mkdir -p /usr/src;
 
 RUN set -eux; \
 	git clone https://github.com/nginx/nginx /usr/src/nginx; \
@@ -171,6 +173,11 @@ RUN set -eux; \
 	install -m644 docs/html/index.html /usr/share/nginx/html/; \
 	install -m644 docs/html/50x.html /usr/share/nginx/html/;
 
+# 精简运行文件
+RUN set -eux; \
+	strip /usr/sbin/nginx; \
+    strip ${NGINX_MODULES_PATH}/*;
+
 # 配置环境变量和工作目录
 WORKDIR /etc/nginx
 
@@ -178,7 +185,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /etc/nginx/start.sh
 
 RUN set -eux; \
-	ln -s /usr/lib/nginx/modules /etc/nginx/modules; \
+	ln -s ${NGINX_MODULES_PATH} /etc/nginx/modules; \
 	# forward request and error logs to docker log collector
 	ln -sf /dev/stdout /var/log/nginx/access.log; \
 	ln -sf /dev/stderr /var/log/nginx/error.log;
@@ -194,7 +201,9 @@ RUN set -eux; \
 		/usr/src \
 		/usr/libexec \
 		; \
-	rm -rf /tmp/* /var/cache/apk/*;
+	rm -rf /tmp/* /var/lib/apt/lists/*;
+
+ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64"
 
 LABEL \
 	description="Nginx Docker Build with BoringSSL" \

@@ -1,0 +1,10 @@
+# 忽略与以下内容相关的依赖(可选)
+libgcc_s.so
+libstdc++.so
+libcrypt.so
+libgpg-error.so
+libz.so
+libc.so
+libm.so
+liblzma.so
+libzstd.so
