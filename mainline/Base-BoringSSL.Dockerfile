@@ -28,8 +28,8 @@ RUN set -eux; \
 	cmake -B/usr/src/boringssl/build -S/usr/src/boringssl \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
-		-DCMAKE_C_FLAGS="-O2 -fPIC" \
-		-DCMAKE_CXX_FLAGS="-O2 -fPIC" \
+		-DCMAKE_C_FLAGS="-O2 -fPIC -Wno-error=cpp" \
+		-DCMAKE_CXX_FLAGS="-O2 -fPIC -Wno-error=cpp" \
 		-GNinja; \
 #	ninja -C /usr/src/boringssl/build; \
 	cmake --build /usr/src/boringssl/build --parallel $(nproc);
