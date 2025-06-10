@@ -12,28 +12,28 @@ COPY exclude-libs.txt /exclude-libs.txt
 COPY extract-perl-modules.sh /extract-perl-modules.sh
 
 RUN set -eux; \
-    chmod +x /extract-libs.sh; \
-    chmod +x /extract-perl-modules.sh; \
-    mkdir -p /deps; \
-    ### 主程序
-    EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/sbin/nginx /deps; \
-    ### module
-    EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
-    EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
-    ### 【ngx_http_image_filter_module依赖非常多】
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
-    ### 【需要额外依赖库】
-    # EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
-    # EXTRA_DIRS="/usr/lib/perl5/vendor_perl" \
-    # /extract-perl-modules.sh /deps; \
-    ls /deps/usr/sbin/nginx; \
-    ls /deps/usr/lib/nginx/modules/;
+	chmod +x /extract-libs.sh; \
+	chmod +x /extract-perl-modules.sh; \
+	mkdir -p /deps; \
+	### 主程序
+	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/sbin/nginx /deps; \
+	### module
+	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
+	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
+	### 【ngx_http_image_filter_module依赖非常多】
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
+	### 【需要额外依赖库】
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
+	# EXTRA_DIRS="/usr/lib/perl5/vendor_perl" \
+	# /extract-perl-modules.sh /deps; \
+	ls /deps/usr/sbin/nginx; \
+	ls /deps/usr/lib/nginx/modules/;
 
 # 生产阶段
 FROM debian:bookworm-slim
@@ -43,12 +43,16 @@ ARG BORINGSSL_COMMIT_ID="HEAD~0"
 
 # 安装运行时依赖
 RUN set -eux; \
-#	addgroup -S nginx; \
-#	adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
+	###【alpine】
+	# addgroup -S nginx; \
+	# adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
+	###【Debian/Ubuntu】
 	groupadd -r nginx; \
 	useradd -r -g nginx -s /sbin/nologin -d /var/cache/nginx nginx; \
+	mkdir -p /var/cache/nginx; \
+	chown -R nginx:nginx /var/cache/nginx; \
 	apt-get update; \
-    DEBIAN_FRONTEND=noninteractive \
+	DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		tzdata \

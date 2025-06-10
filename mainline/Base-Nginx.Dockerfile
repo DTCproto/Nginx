@@ -86,12 +86,16 @@ ARG NGINX_DYNAMIC_MODULES="\
 # gnupg 仅在验证 GPG 签名时需要
 
 RUN set -eux; \
-#	addgroup -S nginx; \
-#	adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
+	###【alpine】
+	# addgroup -S nginx; \
+	# adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
+	###【Debian/Ubuntu】
 	groupadd -r nginx; \
 	useradd -r -g nginx -s /sbin/nologin -d /var/cache/nginx nginx; \
-    apt-get update; \
-    DEBIAN_FRONTEND=noninteractive \
+	mkdir -p /var/cache/nginx; \
+	chown -R nginx:nginx /var/cache/nginx; \
+	apt-get update; \
+	DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		tzdata \
@@ -110,7 +114,7 @@ RUN set -eux; \
 		zlib1g-dev \
 		libperl-dev \
 		; \
-    rm -rf /var/lib/apt/lists/*; \
+	rm -rf /var/lib/apt/lists/*; \
 	mkdir -p /usr/src;
 
 RUN set -eux; \
@@ -176,7 +180,7 @@ RUN set -eux; \
 # 精简运行文件
 RUN set -eux; \
 	strip /usr/sbin/nginx; \
-    strip ${NGINX_MODULES_PATH}/*;
+	strip ${NGINX_MODULES_PATH}/*;
 
 # 配置环境变量和工作目录
 WORKDIR /etc/nginx
