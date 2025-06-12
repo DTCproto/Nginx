@@ -45,10 +45,10 @@ jobs:
   build-base:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
+      contents: none
+      packages: none
+      attestations: none
+      id-token: none
     # 同一个标签，不能多次push，会强制清空覆盖所有数据
     # strategy:
     #   matrix:

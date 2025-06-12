@@ -37,6 +37,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: none
+      packages: none
+      attestations: none
+      id-token: none
     # 同一个标签，不能多次push，会强制清空覆盖所有数据
     # strategy:
     #   matrix:
