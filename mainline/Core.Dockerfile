@@ -28,10 +28,9 @@ RUN set -eux; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
 	### 【ngx_http_image_filter_module依赖非常多】
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
-	### 【需要额外依赖库】
+	### 【ngx_http_perl_module需要额外依赖库】
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
-	# EXTRA_DIRS="/usr/lib/perl5/vendor_perl" \
-	# /extract-perl-modules.sh /deps; \
+	# EXTRA_DIRS="/usr/lib/perl5/vendor_perl" /extract-perl-modules.sh /deps; \
 	ls /deps/usr/sbin/nginx; \
 	ls /deps/usr/lib/nginx/modules/;
 

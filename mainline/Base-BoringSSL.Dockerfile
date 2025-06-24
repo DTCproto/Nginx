@@ -21,7 +21,8 @@ RUN set -eux; \
 # CMAKE_BUILD_TYPE: Debug, Release, RelWithDebInfo, MinSizeRel
 # -j$(getconf _NPROCESSORS_ONLN) | -j"$(nproc)"
 RUN set -eux; \
-	git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl; \
+	# git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl; \
+	git clone https://github.com/google/boringssl.git /usr/src/boringssl; \
 	cd /usr/src/boringssl; \
 	git checkout --force --quiet ${BORINGSSL_COMMIT_ID}; \
 	mkdir -p /usr/src/boringssl/build; \
