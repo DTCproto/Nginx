@@ -47,7 +47,7 @@ RUN set -eux; \
 	strip /usr/boringssl/lib/*;
 
 # 方便作为基础构建镜像
-FROM gcc:15
+FROM gcc:15-bookworm
 
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 

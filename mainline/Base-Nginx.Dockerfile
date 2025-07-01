@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="gcc:15"
+ARG BASE_IMAGE="gcc:15-bookworm"
 
 FROM ${BASE_IMAGE} AS builder
 
