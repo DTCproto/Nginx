@@ -26,9 +26,25 @@ use a C++ linker rather than a C linker.
 某些项目可能需要切换最终链接以使用 C++ 链接器而不是 C 链接器。
 ```
 
+[boringssl-commit-5e3ba4c](https://github.com/google/boringssl/commit/5e3ba4c15b67ed00fe8a71dc3a45ebd6211d299f)
+
+```
+Stop copying targets into subdirectory in the CMake build
+Update-Note: BoringSSL's build no longer places an extra copy of
+libcrypto.a in crypto/libcrypto.a, etc. Outputs should be picked up from
+the build root directly.
+
+停止将目标复制到 CMake 构建中的子目录中
+更新说明：
+BoringSSL 的构建版本不再在 crypto/libcrypto.a 等目录中额外放置 libcrypto.a 副本。
+输出应直接从构建根目录获取。
+```
+
 ### 解决办法
 
 [nginx-ticket-2605](https://trac.nginx.org/nginx/ticket/2605)
+
+[nginx-issues-639](https://github.com/nginx/nginx/issues/639#issuecomment-2816563363)
 
 ```shell
 ./configure \
@@ -42,7 +58,7 @@ use a C++ linker rather than a C linker.
 ./configure \
 	--with-cc=c++ \
 	--with-cc-opt="-I/usr/src/boringssl/include -x c" \
-	--with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto"
+	--with-ld-opt="-L/usr/src/boringssl/build"
 ```
 
 # 二、QEMU binfmt指定(V8+)版本
