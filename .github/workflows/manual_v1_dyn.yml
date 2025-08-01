@@ -76,7 +76,7 @@ jobs:
           cd ${{ github.workspace }}/build
           git clone https://boringssl.googlesource.com/boringssl
           cd ${{ github.workspace }}/build/boringssl
-          git reset --hard ${{ inputs.ssl_commit_id }}
+          git checkout --force --quiet ${{ inputs.ssl_commit_id }}
           echo "ssl_short_commit_id=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Login to Docker Hub
