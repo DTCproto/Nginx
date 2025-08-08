@@ -5,10 +5,6 @@ FROM ${BASE_IMAGE} AS builder
 ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
-ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
-ARG NJS_COMMIT_ID="HEAD~0"
-ARG QUICKJS_COMMIT_ID="HEAD~0"
-ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 # nginx:alpine nginx -V
 
@@ -75,15 +71,7 @@ ARG NGINX_DYNAMIC_MODULES="\
 	"
 
 ARG NGINX_DYNAMIC_MODULES_EXT="\
-		--with-http_xslt_module=dynamic \
-		--with-http_perl_module=dynamic \
-		--with-http_image_filter_module=dynamic \
-		--with-http_geoip_module=dynamic \
-		--with-stream_geoip_module=dynamic \
-		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/ngx_brotli \
-		--add-dynamic-module=/usr/src/njs/nginx \
-		--add-dynamic-module=/usr/src/brutal-nginx \
 	"
 
 # gnupg 仅在验证 GPG 签名时需要
@@ -130,35 +118,6 @@ RUN set -eux; \
 	cd /usr/src/ngx_brotli; \
 	git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID};
 
-RUN set -eux; \
-	git clone https://github.com/openresty/headers-more-nginx-module /usr/src/ngx_headers_more; \
-	cd /usr/src/ngx_headers_more; \
-	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID};
-
-# RUN set -eux; \
-#	git clone https://github.com/bellard/quickjs /usr/src/quickjs; \
-#	cd /usr/src/quickjs; \
-#	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
-#	mkdir -p build; \
-#	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
-
-RUN set -eux; \
-	git clone https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
-	cd /usr/src/quickjs; \
-	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
-	CFLAGS="-O2 -fPIC" cmake -B build; \
-	cmake --build build --target qjs -j $(nproc);
-
-RUN set -eux; \
-	git clone https://github.com/nginx/njs /usr/src/njs; \
-	cd /usr/src/njs; \
-	git checkout --force --quiet ${NJS_COMMIT_ID};
-
-RUN set -eux; \
-	git clone https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
-	cd /usr/src/brutal-nginx; \
-	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID};
-
 # Nginx不作为被依赖的共享库，无需-fPIC
 # Nginx Core + Dynamic Modules
 # 分开编译会导致部分模块加载异常(例如ngx_http_perl_module)
@@ -167,8 +126,8 @@ RUN set -eux; \
 	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} ${NGINX_DYNAMIC_MODULES_EXT} \
 	--build="nginx-core" \
 	--with-cc=c++ \
-	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -I/usr/src/quickjs -x c" \
-	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib -L/usr/src/quickjs/build"; \
+	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -x c" \
+	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib"; \
 	make -j"$(nproc)"; \
 	make install;
 

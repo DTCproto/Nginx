@@ -18,6 +18,7 @@ RUN set -eux; \
 	### 主程序
 	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/sbin/nginx /deps; \
 	### module
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_mail_module.so /deps; \
 	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
@@ -76,7 +77,7 @@ COPY --from=builder /usr/share/nginx /usr/share/nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /etc/nginx/start.sh
 
-ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64"
+ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:/usr/boringssl/lib"
 
 LABEL description="Nginx Docker Build with BoringSSL" \
 	  maintainer="Custom Auto Build" \

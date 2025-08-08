@@ -1,4 +1,4 @@
-name: BUILD_NGINX_WITH_BORINGSSL(V3)
+name: BUILD_NGINX_WITH_BORINGSSL(V3 Lite)
 
 on:
   # you may only define up to 10 `inputs` for a `workflow_dispatch` event
@@ -18,21 +18,6 @@ on:
         description: "指定ngx_brotli使用commit id版本"
         required: true
         default: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
-        type: string
-      ngx_headers_more_commit_id:
-        description: "指定ngx_headers_more使用commit id版本"
-        required: true
-        default: "v0.39"
-        type: string
-      njs_commit_id:
-        description: "指定njs使用commit id版本"
-        required: true
-        default: "0.9.1"
-        type: string
-      quickjs_commit_id:
-        description: "指定quickjs使用commit id版本"
-        required: true
-        default: "v0.10.1"
         type: string
       build_ssl:
         description: "enable ssl build"
@@ -127,16 +112,16 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            BUILD_SHARED_LIBS=1
+            BUILD_SHARED_LIBS=0
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
           push: ${{ inputs.release_archives }}
           provenance: false
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
-            ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl-static
+            ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:boringssl-static-latest
+            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl-static
+            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-static-latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-static-latest
           cache-to: type=inline
 
       - name: Build And Push (base)
@@ -144,7 +129,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/mainline/
-          file: ${{ github.workspace }}/mainline/Base-Nginx.Dockerfile
+          file: ${{ github.workspace }}/mainline/Base-Nginx-Lite.Dockerfile
           platforms: |
             linux/amd64
             linux/arm64
@@ -152,23 +137,20 @@ jobs:
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
             NGX_BROTLI_COMMIT_ID=${{ inputs.ngx_brotli_commit_id }}
-            NGX_HEADERS_MORE_COMMIT_ID=${{ inputs.ngx_headers_more_commit_id }}
-            NJS_COMMIT_ID=${{ inputs.njs_commit_id }}
-            QUICKJS_COMMIT_ID=${{ inputs.quickjs_commit_id }}
-            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
+            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl-static
           push: ${{ inputs.release_archives }}
           provenance: false
           #tags: ${{ steps.meta.outputs.tags }}
           #labels: ${{ steps.meta.outputs.labels }}
           #annotations: ${{ steps.meta.outputs.annotations }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl-lite
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl-lite
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-lite-latest
+            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl-lite
+            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl-lite
+            ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-lite-latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-lite-latest
           cache-to: type=inline
 
       - name: Build And Push (core)
@@ -183,15 +165,13 @@ jobs:
           build-args: |
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
-            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
+            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl-lite
           push: ${{ inputs.release_archives }}
           provenance: false
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl-lite
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-lite-latest
+            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl-lite
+            ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-lite-latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-lite-latest
           cache-to: type=inline

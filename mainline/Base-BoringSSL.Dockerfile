@@ -1,4 +1,4 @@
-FROM gcc:15 AS builder
+FROM gcc:15-bookworm AS builder
 
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG BUILD_SHARED_LIBS="1"
@@ -39,30 +39,14 @@ RUN set -eux; \
 RUN set -eux; \
 	mkdir -p /usr/boringssl/include /usr/boringssl/lib; \
 	cp -r /usr/src/boringssl/include/openssl /usr/boringssl/include/openssl; \
-	cp /usr/src/boringssl/build/libssl.* /usr/boringssl/lib; \
-	cp /usr/src/boringssl/build/libcrypto.* /usr/boringssl/lib;
+	cp -r /usr/src/boringssl/build/* /usr/boringssl/lib; \
+	ls /usr/boringssl/lib;
 
-# 精简运行文件
+# clean
 RUN set -eux; \
-	strip /usr/boringssl/lib/*;
+	rm -rf /tmp/* /usr/src;
 
-# 方便作为基础构建镜像
-FROM gcc:15-bookworm
-
-ARG BORINGSSL_COMMIT_ID="HEAD~0"
-
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		ca-certificates \
-		tzdata \
-		; \
-	apt-get clean; \
-	rm -rf /tmp/* /var/lib/apt/lists/*;
-
-COPY --from=builder /usr/boringssl /usr/local
-
-ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64"
+ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:/usr/boringssl/lib"
 
 LABEL \
 	description="Optimized BoringSSL for NGINX with GCC 15" \
