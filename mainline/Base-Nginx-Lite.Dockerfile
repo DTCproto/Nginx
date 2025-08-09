@@ -51,6 +51,7 @@ ARG NGINX_CORE_MODULES="\
 		--with-http_random_index_module \
 		--with-http_secure_link_module \
 		--with-http_stub_status_module \
+		--with-http_degradation_module \
 		--with-http_slice_module \
 		--with-http_v2_module \
 		--with-http_v3_module \
@@ -68,9 +69,14 @@ ARG NGINX_CORE_MODULES="\
 ARG NGINX_DYNAMIC_MODULES="\
 		--with-mail=dynamic \
 		--with-mail_ssl_module \
+		--with-http_xslt_module=dynamic \
+		--with-http_perl_module=dynamic \
+		--with-http_image_filter_module=dynamic \
+		--with-http_geoip_module=dynamic \
+		--with-stream_geoip_module=dynamic \
 	"
 
-ARG NGINX_DYNAMIC_MODULES_EXT="\
+ARG NGINX_DYNAMIC_MODULES_EXTERNAL="\
 		--add-dynamic-module=/usr/src/ngx_brotli \
 	"
 
@@ -113,6 +119,8 @@ RUN set -eux; \
 	cd /usr/src/nginx; \
 	git checkout --force --quiet ${NGINX_COMMIT_ID};
 
+### ngx_http_brotli_static_module.so;
+### ngx_http_brotli_filter_module.so;
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli; \
 	cd /usr/src/ngx_brotli; \
@@ -123,8 +131,8 @@ RUN set -eux; \
 # 分开编译会导致部分模块加载异常(例如ngx_http_perl_module)
 RUN set -eux; \
 	cd /usr/src/nginx; \
-	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} ${NGINX_DYNAMIC_MODULES_EXT} \
-	--build="nginx-core" \
+	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} ${NGINX_DYNAMIC_MODULES_EXTERNAL} \
+	--build="Nginx With Dynamic Modules(Lite)" \
 	--with-cc=c++ \
 	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -x c" \
 	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib"; \
