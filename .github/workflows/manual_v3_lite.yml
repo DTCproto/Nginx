@@ -7,12 +7,12 @@ on:
       nginx_commit_id:
         description: "指定nginx使用commit id版本"
         required: true
-        default: "release-1.29.0"
+        default: "release-1.29.1"
         type: string
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
-        default: "0.20250807.0"
+        default: "0.20250818.0"
         type: string
       ngx_brotli_commit_id:
         description: "指定ngx_brotli使用commit id版本"
