@@ -27,7 +27,7 @@ on:
       njs_commit_id:
         description: "指定njs使用commit id版本"
         required: true
-        default: "0.9.1"
+        default: "0.9.2"
         type: string
       quickjs_commit_id:
         description: "指定quickjs使用commit id版本"
