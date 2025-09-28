@@ -1,4 +1,4 @@
-FROM gcc:15-bookworm AS builder
+FROM gcc:15-trixie AS builder
 
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG BUILD_SHARED_LIBS="1"
