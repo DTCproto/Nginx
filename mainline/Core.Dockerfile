@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="debian:bookworm-slim"
+ARG BASE_IMAGE="debian:trixie-slim"
 
 FROM ${BASE_IMAGE} AS builder
 
@@ -36,7 +36,7 @@ RUN set -eux; \
 	ls /deps/usr/lib/nginx/modules/;
 
 # 生产阶段
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
