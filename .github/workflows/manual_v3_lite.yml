@@ -12,7 +12,7 @@ on:
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
-        default: "0.20250818.0"
+        default: "0.20251002.0"
         type: string
       ngx_brotli_commit_id:
         description: "指定ngx_brotli使用commit id版本"
@@ -57,7 +57,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          image: tonistiigi/binfmt:qemu-v9.2.0
+          image: tonistiigi/binfmt:qemu-v10.0.4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
