@@ -105,6 +105,7 @@ RUN set -eux; \
 		pkg-config \
 		build-essential \
 		libgd-dev \
+		libgd-tools \
 		libmaxminddb-dev \
 		libxslt-dev \
 		libxml2-dev \
