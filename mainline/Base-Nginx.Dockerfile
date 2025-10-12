@@ -5,6 +5,7 @@ FROM ${BASE_IMAGE} AS builder
 ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
+ARG NGX_GEOIP2_COMMIT_ID="HEAD~0"
 ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
 ARG NJS_COMMIT_ID="HEAD~0"
 ARG QUICKJS_COMMIT_ID="HEAD~0"
@@ -12,7 +13,7 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 # nginx:alpine nginx -V
 
-ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fcf-protection=full -fno-strict-aliasing -fomit-frame-pointer"
+ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fcf-protection=full -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
@@ -65,6 +66,7 @@ ARG NGINX_CORE_MODULES="\
 		--with-stream_ssl_module \
 		--with-stream_ssl_preread_module \
 		--with-stream_realip_module \
+		--with-mail_ssl_module \
 		--with-threads \
 		--with-compat \
 		--with-file-aio \
@@ -72,17 +74,15 @@ ARG NGINX_CORE_MODULES="\
 
 ARG NGINX_DYNAMIC_MODULES="\
 		--with-mail=dynamic \
-		--with-mail_ssl_module \
 		--with-http_xslt_module=dynamic \
 		--with-http_perl_module=dynamic \
 		--with-http_image_filter_module=dynamic \
-		--with-http_geoip_module=dynamic \
-		--with-stream_geoip_module=dynamic \
 	"
 
 ARG NGINX_DYNAMIC_MODULES_EXTERNAL="\
-		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/ngx_brotli \
+		--add-dynamic-module=/usr/src/ngx_http_geoip2_module \
+		--add-dynamic-module=/usr/src/ngx_headers_more \
 		--add-dynamic-module=/usr/src/njs/nginx \
 		--add-dynamic-module=/usr/src/brutal-nginx \
 	"
@@ -161,6 +161,14 @@ RUN set -eux; \
 	cd /usr/src/njs; \
 	git checkout --force --quiet ${NJS_COMMIT_ID};
 
+### ngx_http_geoip2_module.so
+### ngx_stream_geoip2_module.so
+RUN set -eux; \
+	git clone https://github.com/leev/ngx_http_geoip2_module /usr/src/ngx_http_geoip2_module; \
+	cd /usr/src/ngx_http_geoip2_module; \
+	git checkout --force --quiet ${NGX_GEOIP2_COMMIT_ID};
+
+### ngx_http_tcp_brutal_module.so
 RUN set -eux; \
 	git clone https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
 	cd /usr/src/brutal-nginx; \
