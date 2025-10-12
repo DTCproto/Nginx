@@ -12,8 +12,8 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 # nginx:alpine nginx -V
 
-ARG NGINX_CC_OPT="-O2 -fstack-clash-protection -Wformat -Werror=format-security -fno-plt"
-ARG NGINX_LD_OPT="-Wl,--as-needed,-O2,--sort-common -Wl,-z,pack-relative-relocs"
+ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fcf-protection=full -fno-strict-aliasing -fomit-frame-pointer"
+ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
 
@@ -109,10 +109,11 @@ RUN set -eux; \
 		ninja-build \
 		libtool \
 		bash \
+		pkg-config \
 		build-essential \
 		libgd-dev \
-		libgeoip-dev \
-		libxslt1-dev \
+		libmaxminddb-dev \
+		libxslt-dev \
 		libxml2-dev \
 		libpcre2-dev \
 		zlib1g-dev \

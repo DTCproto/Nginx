@@ -14,6 +14,10 @@ RUN set -eux; \
 		make \
 		cmake \
 		ninja-build \
+		libtool \
+		bash \
+		pkg-config \
+		build-essential \
 		; \
 	rm -rf /var/lib/apt/lists/*; \
 	mkdir -p /usr/src;
