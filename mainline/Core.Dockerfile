@@ -14,27 +14,29 @@ COPY extract-perl-modules.sh /extract-perl-modules.sh
 RUN set -eux; \
 	chmod +x /extract-libs.sh; \
 	chmod +x /extract-perl-modules.sh; \
+	ls -al /usr/lib/nginx/modules/; \
 	mkdir -p /deps; \
 	### 主程序
 	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/sbin/nginx /deps; \
 	### module
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_mail_module.so /deps; \
 	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip2_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip2_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_tcp_brutal_module.so /deps; \
 	### 【ngx_http_image_filter_module依赖非常多】
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
 	### 【ngx_http_perl_module需要额外依赖库】
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
 	# EXTRA_DIRS="/usr/lib/perl5/vendor_perl" /extract-perl-modules.sh /deps; \
-	ls /deps/usr/sbin/nginx; \
-	ls /deps/usr/lib/nginx/modules/;
+	### 【only SSL Shared】
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_mail_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
+	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
+	ls -al /deps/usr/sbin/nginx; \
+	ls -al /deps/usr/lib/nginx/modules/;
 
 # 生产阶段
 FROM debian:trixie-slim

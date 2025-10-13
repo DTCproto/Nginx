@@ -19,6 +19,11 @@ on:
         required: true
         default: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
         type: string
+      ngx_headers_more_commit_id:
+        description: "指定ngx_headers_more使用commit id版本"
+        required: true
+        default: "v0.39"
+        type: string
       build_ssl:
         description: "enable ssl build"
         default: true
@@ -137,6 +142,7 @@ jobs:
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
             NGX_BROTLI_COMMIT_ID=${{ inputs.ngx_brotli_commit_id }}
+            NGX_HEADERS_MORE_COMMIT_ID=${{ inputs.ngx_headers_more_commit_id }}
             BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl-static
           push: ${{ inputs.release_archives }}
           provenance: false
