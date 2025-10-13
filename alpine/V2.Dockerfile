@@ -153,7 +153,7 @@ RUN \
 RUN \
 	cd /usr/src/nginx \
 	&& rm -rf /etc/nginx/html/ \
-	&& mkdir /etc/nginx/conf.d/ \
+	&& mkdir /etc/nginx/http.d/ \
 	&& mkdir /etc/nginx/stream.d/ \
 	&& mkdir -p /usr/share/nginx/html/ \
 	&& install -m644 docs/html/index.html /usr/share/nginx/html/ \
@@ -203,7 +203,7 @@ LABEL description="Nginx Docker Build with BoringSSL" \
 # EXPOSE 80 443
 
 # 挂载 NGINX 配置和站点目录
-VOLUME /etc/nginx/conf.d /etc/nginx/stream.d
+VOLUME /etc/nginx/http.d /etc/nginx/stream.d
 
 STOPSIGNAL SIGTERM
 
