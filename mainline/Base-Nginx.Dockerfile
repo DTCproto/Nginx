@@ -16,7 +16,7 @@ ARG QUICKJS_COMMIT_ID="HEAD~0"
 
 # nginx:alpine nginx -V
 
-ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fcf-protection=full -fno-strict-aliasing -fomit-frame-pointer"
+ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
