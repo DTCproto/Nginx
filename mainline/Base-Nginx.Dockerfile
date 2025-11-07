@@ -15,6 +15,7 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 
 ARG NJS_COMMIT_ID="HEAD~0"
 ARG QUICKJS_COMMIT_ID="HEAD~0"
+ARG QUICKJS_NG_COMMIT_ID="HEAD~0"
 
 # nginx:alpine nginx -V
 
@@ -176,21 +177,21 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
-# RUN set -eux; \
-#	git clone --recurse-submodules https://github.com/bellard/quickjs /usr/src/quickjs; \
-#	cd /usr/src/quickjs; \
-#	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
-#	git submodule update --init --recursive; \
-#	mkdir -p build; \
-#	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
-
-RUN set -eux; \
-	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
+ RUN set -eux; \
+	git clone --recurse-submodules https://github.com/bellard/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
 	git submodule update --init --recursive; \
-	CFLAGS="-O2 -fPIC" cmake -B build; \
-	cmake --build build --target qjs -j $(nproc);
+	mkdir -p build; \
+	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
+
+# RUN set -eux; \
+# 	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
+# 	cd /usr/src/quickjs; \
+# 	git checkout --force --quiet ${QUICKJS_NG_COMMIT_ID}; \
+# 	git submodule update --init --recursive; \
+# 	CFLAGS="-O2 -fPIC" cmake -B build; \
+# 	cmake --build build --target qjs -j $(nproc);
 
 ### ngx_http_js_module.so;
 ### ngx_stream_js_module.so;
