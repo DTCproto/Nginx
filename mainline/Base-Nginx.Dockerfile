@@ -177,14 +177,19 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
- RUN set -eux; \
+
+### --with-cc-opt="-I/usr/src/quickjs"
+### --with-ld-opt="-L/usr/src/quickjs"
+RUN set -eux; \
 	git clone --recurse-submodules https://github.com/bellard/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
 	git submodule update --init --recursive; \
 	mkdir -p build; \
-	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
+	CFLAGS='-O2 -fPIC' make libquickjs.a;
 
+### --with-cc-opt="-I/usr/src/quickjs"
+### --with-ld-opt="-L/usr/src/quickjs/build"
 # RUN set -eux; \
 # 	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 # 	cd /usr/src/quickjs; \
@@ -192,6 +197,7 @@ RUN set -eux; \
 # 	git submodule update --init --recursive; \
 # 	CFLAGS="-O2 -fPIC" cmake -B build; \
 # 	cmake --build build --target qjs -j $(nproc);
+
 
 ### ngx_http_js_module.so;
 ### ngx_stream_js_module.so;
@@ -210,7 +216,7 @@ RUN set -eux; \
 	--build="Nginx With Dynamic Modules[SSL Shared]" \
 	--with-cc=c++ \
 	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -I/usr/src/quickjs -x c" \
-	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib -L/usr/src/quickjs/build"; \
+	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib -L/usr/src/quickjs -L/usr/src/quickjs/build"; \
 	make -j"$(nproc)"; \
 	make install;
 
