@@ -6,6 +6,8 @@ ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
+ARG NGX_ZSTD_COMMIT_ID="HEAD~0"
+
 ARG NGX_GEOIP2_COMMIT_ID="HEAD~0"
 ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
 
@@ -84,8 +86,9 @@ ARG NGINX_DYNAMIC_MODULES="\
 
 ARG NGINX_DYNAMIC_MODULES_EXTERNAL="\
 		--add-dynamic-module=/usr/src/ngx_brotli \
+		--add-dynamic-module=/usr/src/zstd-nginx-module \
 		--add-dynamic-module=/usr/src/ngx_http_geoip2_module \
-		--add-dynamic-module=/usr/src/ngx_headers_more \
+		--add-dynamic-module=/usr/src/headers-more-nginx-module \
 		--add-dynamic-module=/usr/src/brutal-nginx \
 		--add-dynamic-module=/usr/src/njs/nginx \
 	"
@@ -112,6 +115,9 @@ RUN set -eux; \
 		ninja-build \
 		libtool \
 		bash \
+		zstd \
+		7zip \
+		unzip \
 		pkg-config \
 		build-essential \
 		libgd-dev \
@@ -127,56 +133,72 @@ RUN set -eux; \
 	mkdir -p /usr/src;
 
 RUN set -eux; \
-	git clone https://github.com/nginx/nginx /usr/src/nginx; \
+	git clone --recurse-submodules https://github.com/nginx/nginx /usr/src/nginx; \
 	cd /usr/src/nginx; \
-	git checkout --force --quiet ${NGINX_COMMIT_ID};
+	git checkout --force --quiet ${NGINX_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 ### ngx_http_brotli_static_module.so;
 ### ngx_http_brotli_filter_module.so;
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli; \
 	cd /usr/src/ngx_brotli; \
-	git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID};
+	git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID}; \
+	git submodule update --init --recursive;
+
+### ngx_http_zstd_static_module.so;
+### ngx_http_zstd_filter_module.so;
+RUN set -eux; \
+	git clone --recurse-submodules https://github.com/tokers/zstd-nginx-module /usr/src/zstd-nginx-module; \
+	cd /usr/src/zstd-nginx-module; \
+	git checkout --force --quiet ${NGX_ZSTD_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 ### ngx_http_geoip2_module.so
 ### ngx_stream_geoip2_module.so
 RUN set -eux; \
-	git clone https://github.com/leev/ngx_http_geoip2_module /usr/src/ngx_http_geoip2_module; \
+	git clone --recurse-submodules https://github.com/leev/ngx_http_geoip2_module /usr/src/ngx_http_geoip2_module; \
 	cd /usr/src/ngx_http_geoip2_module; \
-	git checkout --force --quiet ${NGX_GEOIP2_COMMIT_ID};
+	git checkout --force --quiet ${NGX_GEOIP2_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 ### ngx_http_headers_more_filter_module.so
 RUN set -eux; \
-	git clone https://github.com/openresty/headers-more-nginx-module /usr/src/ngx_headers_more; \
-	cd /usr/src/ngx_headers_more; \
-	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID};
+	git clone --recurse-submodules https://github.com/openresty/headers-more-nginx-module /usr/src/headers-more-nginx-module; \
+	cd /usr/src/headers-more-nginx-module; \
+	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 ### ngx_http_tcp_brutal_module.so
 RUN set -eux; \
-	git clone https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
+	git clone --recurse-submodules https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
 	cd /usr/src/brutal-nginx; \
-	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID};
+	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 # RUN set -eux; \
-#	git clone https://github.com/bellard/quickjs /usr/src/quickjs; \
+#	git clone --recurse-submodules https://github.com/bellard/quickjs /usr/src/quickjs; \
 #	cd /usr/src/quickjs; \
 #	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
+#	git submodule update --init --recursive; \
 #	mkdir -p build; \
 #	CFLAGS='-O2 -fPIC' make build/libquickjs.a;
 
 RUN set -eux; \
-	git clone https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
+	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_COMMIT_ID}; \
+	git submodule update --init --recursive; \
 	CFLAGS="-O2 -fPIC" cmake -B build; \
 	cmake --build build --target qjs -j $(nproc);
 
 ### ngx_http_js_module.so;
 ### ngx_stream_js_module.so;
 RUN set -eux; \
-	git clone https://github.com/nginx/njs /usr/src/njs; \
+	git clone --recurse-submodules https://github.com/nginx/njs /usr/src/njs; \
 	cd /usr/src/njs; \
-	git checkout --force --quiet ${NJS_COMMIT_ID};
+	git checkout --force --quiet ${NJS_COMMIT_ID}; \
+	git submodule update --init --recursive;
 
 # Nginx不作为被依赖的共享库，无需-fPIC
 # Nginx Core + Dynamic Modules

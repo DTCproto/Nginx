@@ -7,32 +7,12 @@ on:
       nginx_commit_id:
         description: "指定nginx使用commit id版本"
         required: true
-        default: "release-1.29.2"
+        default: "release-1.29.3"
         type: string
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
         default: "0.20251002.0"
-        type: string
-      ngx_brotli_commit_id:
-        description: "指定ngx_brotli使用commit id版本"
-        required: true
-        default: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
-        type: string
-      ngx_headers_more_commit_id:
-        description: "指定ngx_headers_more使用commit id版本"
-        required: true
-        default: "v0.39"
-        type: string
-      njs_commit_id:
-        description: "指定njs使用commit id版本"
-        required: true
-        default: "0.9.3"
-        type: string
-      quickjs_commit_id:
-        description: "指定quickjs使用commit id版本"
-        required: true
-        default: "v0.10.1"
         type: string
       build_ssl:
         description: "enable ssl build"
@@ -52,8 +32,41 @@ on:
         type: boolean
 
 jobs:
+  pre:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      default_commit_id: HEAD~0
+      default_branch: ${{ steps.set_global_params.outputs.default_branch }}
+      ngx_brotli_commit_id: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
+      ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
+      ngx_headers_more_commit_id: "v0.39"
+      njs_commit_id: "0.9.4"
+      quickjs_commit_id: "v0.11.0"
+      ACTOR_LC: ${{ steps.set_case_params.outputs.ACTOR_LC }}
+      REPOSITORY_LC: ${{ steps.set_case_params.outputs.REPOSITORY_LC }}
+    steps:
+      - name: set global params
+        id: set_global_params
+        run: |
+          echo "default_branch=main" >> "$GITHUB_OUTPUT"
+
+      - name: set lower case name
+        id: set_case_params
+        run: |
+          echo "ACTOR_LC=${ACTOR,,}" >> "$GITHUB_OUTPUT"
+          echo "REPOSITORY_LC=${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        env:
+          ACTOR: '${{ github.actor }}'
+          REPOSITORY: '${{ github.repository }}'
+ 
   build-base:
     runs-on: ubuntu-latest
+    needs: [pre]
     permissions:
       contents: write
       packages: write
@@ -68,6 +81,8 @@ jobs:
         run: df -h && sudo apt-get clean && docker system prune -a -f && sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc && df -h
 
       - uses: actions/checkout@v5
+        with:
+          submodules: 'true'
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -99,14 +114,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: set lower case name
-        run: |
-          echo "ACTOR_LC=${ACTOR,,}" >>${GITHUB_ENV}
-          echo "REPOSITORY_LC=${REPOSITORY,,}" >>${GITHUB_ENV}
-        env:
-          ACTOR: '${{ github.actor }}'
-          REPOSITORY: '${{ github.repository }}'
 
       # 自动标签
       #- name: Extract metadata (tags, labels) for Docker
@@ -151,11 +158,12 @@ jobs:
           build-args: |
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
-            NGX_BROTLI_COMMIT_ID=${{ inputs.ngx_brotli_commit_id }}
-            NGX_HEADERS_MORE_COMMIT_ID=${{ inputs.ngx_headers_more_commit_id }}
-            NJS_COMMIT_ID=${{ inputs.njs_commit_id }}
-            QUICKJS_COMMIT_ID=${{ inputs.quickjs_commit_id }}
-            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
+            NGX_BROTLI_COMMIT_ID=${{ needs.pre.outputs.ngx_brotli_commit_id }}
+            NGX_ZSTD_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_commit_id }}
+            NGX_HEADERS_MORE_COMMIT_ID=${{ needs.pre.outputs.ngx_headers_more_commit_id }}
+            NJS_COMMIT_ID=${{ needs.pre.outputs.njs_commit_id }}
+            QUICKJS_COMMIT_ID=${{ needs.pre.outputs.quickjs_commit_id }}
+            BASE_IMAGE=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
           push: ${{ inputs.release_archives }}
           provenance: false
           #tags: ${{ steps.meta.outputs.tags }}
@@ -165,10 +173,10 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:base-boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:base-boringssl-latest
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:base-boringssl-latest
+          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:base-boringssl-latest
           cache-to: type=inline
 
       - name: Build And Push (core)
@@ -183,15 +191,15 @@ jobs:
           build-args: |
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
-            BASE_IMAGE=ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
+            BASE_IMAGE=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl
           push: ${{ inputs.release_archives }}
           provenance: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/nginx:latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/nginx:boringssl-latest
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:boringssl-latest
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:latest
+          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:boringssl-latest
           cache-to: type=inline

@@ -21,6 +21,8 @@ RUN set -eux; \
 	### module
 	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
+	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_static_module.so /deps; \
+	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
 	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip2_module.so /deps; \

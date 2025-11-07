@@ -16,6 +16,9 @@ RUN set -eux; \
 		ninja-build \
 		libtool \
 		bash \
+		zstd \
+		7zip \
+		unzip \
 		pkg-config \
 		build-essential \
 		; \
@@ -26,9 +29,10 @@ RUN set -eux; \
 # -j$(getconf _NPROCESSORS_ONLN) | -j"$(nproc)"
 RUN set -eux; \
 	# git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl; \
-	git clone https://github.com/google/boringssl.git /usr/src/boringssl; \
+	git clone --recurse-submodules https://github.com/google/boringssl.git /usr/src/boringssl; \
 	cd /usr/src/boringssl; \
 	git checkout --force --quiet ${BORINGSSL_COMMIT_ID}; \
+	git submodule update --init --recursive; \
 	mkdir -p /usr/src/boringssl/build; \
 	cmake -B/usr/src/boringssl/build -S/usr/src/boringssl \
 		-DCMAKE_BUILD_TYPE=Release \
