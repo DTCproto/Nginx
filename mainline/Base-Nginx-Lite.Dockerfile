@@ -210,8 +210,9 @@ RUN set -eux; \
 
 RUN set -eux; \
 	chown -R nginx:nginx /etc/nginx/start.sh; \
-	chown -R nginx:nginx /etc/nginx/start.sh; \
-	chmod -R 755 /etc/nginx/start.sh;
+	chown -R nginx:nginx /etc/nginx/nginx.conf; \
+	chmod -R 755 /etc/nginx/start.sh; \
+	chmod -R 644 /etc/nginx/nginx.conf;
 
 # clean
 RUN set -eux; \
