@@ -44,6 +44,7 @@ jobs:
       default_branch: ${{ steps.set_global_params.outputs.default_branch }}
       ngx_brotli_commit_id: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
+      ngx_zstd_lee_commit_id: "87f3302e72e0faf721db0cc9462d0a9b960e4061"
       ngx_headers_more_commit_id: "v0.39"
       njs_commit_id: "0.9.4"
       quickjs_commit_id: "9688007ccbba2024b339ddcd52044b23e2a4d982"
@@ -116,14 +117,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: set lower case name
-        run: |
-          echo "ACTOR_LC=${ACTOR,,}" >>${GITHUB_ENV}
-          echo "REPOSITORY_LC=${REPOSITORY,,}" >>${GITHUB_ENV}
-        env:
-          ACTOR: '${{ github.actor }}'
-          REPOSITORY: '${{ github.repository }}'
-
       # 自动标签
       #- name: Extract metadata (tags, labels) for Docker
       #  id: meta
@@ -169,6 +162,7 @@ jobs:
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
             NGX_BROTLI_COMMIT_ID=${{ needs.pre.outputs.ngx_brotli_commit_id }}
             NGX_ZSTD_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_commit_id }}
+            NGX_ZSTD_LEE_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_lee_commit_id }}
             NGX_HEADERS_MORE_COMMIT_ID=${{ needs.pre.outputs.ngx_headers_more_commit_id }}
             NJS_COMMIT_ID=${{ needs.pre.outputs.njs_commit_id }}
             QUICKJS_COMMIT_ID=${{ needs.pre.outputs.quickjs_commit_id }}

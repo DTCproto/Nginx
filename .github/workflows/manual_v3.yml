@@ -44,6 +44,7 @@ jobs:
       default_branch: ${{ steps.set_global_params.outputs.default_branch }}
       ngx_brotli_commit_id: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
+      ngx_zstd_lee_commit_id: "87f3302e72e0faf721db0cc9462d0a9b960e4061"
       ngx_headers_more_commit_id: "v0.39"
       njs_commit_id: "0.9.4"
       quickjs_commit_id: "9688007ccbba2024b339ddcd52044b23e2a4d982"
@@ -64,7 +65,7 @@ jobs:
         env:
           ACTOR: '${{ github.actor }}'
           REPOSITORY: '${{ github.repository }}'
- 
+
   build-base:
     runs-on: ubuntu-latest
     needs: [pre]
@@ -142,9 +143,9 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
             ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:boringssl-latest
-            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
-            ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.ACTOR_LC }}/base-ssl:boringssl-latest
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl
+            ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:boringssl-latest
+          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:boringssl-latest
           cache-to: type=inline
 
       - name: Build And Push (base)
@@ -161,6 +162,7 @@ jobs:
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
             NGX_BROTLI_COMMIT_ID=${{ needs.pre.outputs.ngx_brotli_commit_id }}
             NGX_ZSTD_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_commit_id }}
+            NGX_ZSTD_LEE_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_lee_commit_id }}
             NGX_HEADERS_MORE_COMMIT_ID=${{ needs.pre.outputs.ngx_headers_more_commit_id }}
             NJS_COMMIT_ID=${{ needs.pre.outputs.njs_commit_id }}
             QUICKJS_COMMIT_ID=${{ needs.pre.outputs.quickjs_commit_id }}

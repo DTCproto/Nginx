@@ -7,6 +7,7 @@ ARG BORINGSSL_COMMIT_ID="HEAD~0"
 
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
 ARG NGX_ZSTD_COMMIT_ID="HEAD~0"
+ARG NGX_ZSTD_LEE_COMMIT_ID="HEAD~0"
 
 ARG NGX_GEOIP2_COMMIT_ID="HEAD~0"
 ARG NGX_HEADERS_MORE_COMMIT_ID="HEAD~0"
@@ -149,10 +150,16 @@ RUN set -eux; \
 
 ### ngx_http_zstd_static_module.so;
 ### ngx_http_zstd_filter_module.so;
+#RUN set -eux; \
+#	git clone --recurse-submodules https://github.com/tokers/zstd-nginx-module /usr/src/zstd-nginx-module; \
+#	cd /usr/src/zstd-nginx-module; \
+#	git checkout --force --quiet ${NGX_ZSTD_COMMIT_ID}; \
+#	git submodule update --init --recursive;
+
 RUN set -eux; \
-	git clone --recurse-submodules https://github.com/tokers/zstd-nginx-module /usr/src/zstd-nginx-module; \
+	git clone --recurse-submodules https://github.com/HanadaLee/ngx_http_zstd_module /usr/src/zstd-nginx-module; \
 	cd /usr/src/zstd-nginx-module; \
-	git checkout --force --quiet ${NGX_ZSTD_COMMIT_ID}; \
+	git checkout --force --quiet ${NGX_ZSTD_LEE_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
 ### ngx_http_geoip2_module.so
