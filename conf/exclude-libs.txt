@@ -1,10 +1,18 @@
 # 忽略与以下内容相关的依赖(可选)
+# /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
 libgcc_s.so
+# /usr/lib/x86_64-linux-gnu/libstdc++.so.6
 libstdc++.so
+# /usr/lib/x86_64-linux-gnu/libcrypt.so.1
 libcrypt.so
-libgpg-error.so
+# /usr/lib/x86_64-linux-gnu/libz.so.1
 libz.so
+# /usr/lib/x86_64-linux-gnu/libc.so.6
 libc.so
+# /usr/lib/x86_64-linux-gnu/libm.so.6
 libm.so
+# /usr/lib/x86_64-linux-gnu/liblzma.so.5
 liblzma.so
+# /usr/lib/x86_64-linux-gnu/libzstd.so.1
 libzstd.so
+libgpg-error.so
