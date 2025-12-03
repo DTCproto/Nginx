@@ -12,7 +12,7 @@ on:
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
-        default: "0.20251110.0"
+        default: "0.20251124.0"
         type: string
       build_ssl:
         description: "enable ssl build"
@@ -48,7 +48,7 @@ jobs:
       ngx_headers_more_commit_id: "v0.39"
       njs_commit_id: "0.9.4"
       quickjs_commit_id: "9688007ccbba2024b339ddcd52044b23e2a4d982"
-      quickjs_ng_commit_id: "v0.10.1"
+      quickjs_ng_commit_id: "v0.11.0"
       ACTOR_LC: ${{ steps.set_case_params.outputs.ACTOR_LC }}
       REPOSITORY_LC: ${{ steps.set_case_params.outputs.REPOSITORY_LC }}
     steps:
