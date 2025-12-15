@@ -46,7 +46,7 @@ jobs:
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
       ngx_zstd_lee_commit_id: "87f3302e72e0faf721db0cc9462d0a9b960e4061"
       ngx_headers_more_commit_id: "v0.39"
-      njs_commit_id: "0.9.4"
+      njs_commit_id: "2781bceba754db0793c55435a56a0dd2248a697b"
       quickjs_commit_id: "c73a435f365e5250dd529cde00675528d7609edf"
       quickjs_ng_commit_id: "v0.11.0"
       ACTOR_LC: ${{ steps.set_case_params.outputs.ACTOR_LC }}

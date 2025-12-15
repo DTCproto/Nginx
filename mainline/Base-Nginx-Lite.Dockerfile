@@ -19,7 +19,14 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
+ARG QJS_CC_OPT=""
+ARG QJS_LD_OPT=""
+
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
+
+ARG PKG_CONFIG_HOME="/usr/src"
+ARG PKG_CONFIG_LIB_DIR="lib"
+ARG PKG_CONFIG_PATH="${PKG_CONFIG_HOME}/${PKG_CONFIG_LIB_DIR}/pkgconfig"
 
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
@@ -108,6 +115,7 @@ RUN set -eux; \
 		make \
 		cmake \
 		ninja-build \
+		meson \
 		libtool \
 		bash \
 		zstd \

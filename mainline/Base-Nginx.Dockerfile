@@ -23,7 +23,14 @@ ARG QUICKJS_NG_COMMIT_ID="HEAD~0"
 ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
+ARG QJS_CC_OPT=""
+ARG QJS_LD_OPT=""
+
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
+
+ARG PKG_CONFIG_HOME="/usr/src"
+ARG PKG_CONFIG_LIB_DIR="lib"
+ARG PKG_CONFIG_PATH="${PKG_CONFIG_HOME}/${PKG_CONFIG_LIB_DIR}/pkgconfig"
 
 # https://nginx.org/en/pgp_keys.html
 # 'D6786CE303D9A9022998DC6CC8464D549AF75C0A' # Sergey Kandaurov <s.kandaurov@f5.com>
@@ -115,6 +122,7 @@ RUN set -eux; \
 		make \
 		cmake \
 		ninja-build \
+		meson \
 		libtool \
 		bash \
 		zstd \
@@ -185,8 +193,8 @@ RUN set -eux; \
 	git submodule update --init --recursive;
 
 
-### --with-cc-opt="-I/usr/src/quickjs"
-### --with-ld-opt="-L/usr/src/quickjs"
+### ARG QJS_CC_OPT="-I/usr/src/quickjs"
+### ARG QJS_LD_OPT="-L/usr/src/quickjs"
 # RUN set -eux; \
 # 	git clone --recurse-submodules https://github.com/bellard/quickjs /usr/src/quickjs; \
 # 	cd /usr/src/quickjs; \
@@ -195,16 +203,22 @@ RUN set -eux; \
 # 	mkdir -p build; \
 # 	CFLAGS='-O2 -fPIC' make libquickjs.a;
 
-### --with-cc-opt="-I/usr/src/quickjs"
-### --with-ld-opt="-L/usr/src/quickjs/build"
+###### cmake
+### ARG QJS_CC_OPT="-I/usr/src/quickjs"
+### ARG QJS_LD_OPT="-L/usr/src/quickjs/build"
+###### meson
+ARG QJS_CC_OPT=""
+ARG QJS_LD_OPT=""
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
 	git checkout --force --quiet ${QUICKJS_NG_COMMIT_ID}; \
 	git submodule update --init --recursive; \
-	CFLAGS="-O2 -fPIC" cmake -B build; \
-	cmake --build build --target qjs -j $(nproc);
-
+#	CFLAGS="-O2 -fPIC" cmake -B build; \
+#	cmake --build build --target qjs -j $(nproc);
+	CFLAGS="${NGINX_CC_OPT} -fPIC" LDFLAGS="${NGINX_LD_OPT}" meson setup build --prefix=${PKG_CONFIG_HOME} --libdir=${PKG_CONFIG_LIB_DIR}; \
+	meson compile -C build; \
+    meson install -C build;
 
 ### ngx_http_js_module.so;
 ### ngx_stream_js_module.so;
@@ -222,8 +236,8 @@ RUN set -eux; \
 	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} ${NGINX_DYNAMIC_MODULES_EXTERNAL} \
 	--build="Nginx With Dynamic Modules[SSL Shared]" \
 	--with-cc=c++ \
-	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -I/usr/src/quickjs -x c" \
-	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib -L/usr/src/quickjs -L/usr/src/quickjs/build"; \
+	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include ${QJS_CC_OPT} -x c" \
+	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib ${QJS_LD_OPT}"; \
 	make -j"$(nproc)"; \
 	make install;
 
