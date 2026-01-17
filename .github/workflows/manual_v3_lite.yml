@@ -166,8 +166,10 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/base-ssl:boringssl-static-latest
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:${{ inputs.ssl_commit_id }}-boringssl-static
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:boringssl-static-latest
-          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:buildcache-static
-          cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:buildcache-static,mode=max
+          #cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:buildcache-static
+          #cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/base-ssl:buildcache-static,mode=max
+          # 完全禁用缓存(二选一)
+          no-cache: true
 
       - name: Build And Push (base)
         if: ${{ inputs.build_base }}
@@ -201,8 +203,10 @@ jobs:
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-base-boringssl-lite
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-base-boringssl-lite
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:base-boringssl-lite-latest
-          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-base
-          cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-base,mode=max
+          #cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-base
+          #cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-base,mode=max
+          # 完全禁用缓存(二选一)
+          no-cache: true
 
       - name: Build And Push (core)
         if: ${{ inputs.build_core }}
@@ -224,5 +228,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx:boringssl-lite-latest
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:${{ inputs.nginx_commit_id }}-${{ inputs.ssl_commit_id }}-boringssl-lite
             ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:boringssl-lite-latest
-          cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-core
-          cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-core,mode=max
+          #cache-from: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-core
+          #cache-to: type=registry,ref=ghcr.io/${{ needs.pre.outputs.ACTOR_LC }}/nginx:buildcache-static-core,mode=max
+          # 完全禁用缓存(二选一)
+          no-cache: true
