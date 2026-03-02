@@ -6,6 +6,7 @@ ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
+
 ARG NGX_ZSTD_COMMIT_ID="HEAD~0"
 ARG NGX_ZSTD_LEE_COMMIT_ID="HEAD~0"
 
@@ -28,7 +29,7 @@ ARG QJS_LD_OPT=""
 
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
 
-ARG PKG_CONFIG_HOME="/usr/src"
+ARG PKG_CONFIG_HOME="/usr/src/pkgs"
 ARG PKG_CONFIG_LIB_DIR="lib"
 ARG PKG_CONFIG_PATH="${PKG_CONFIG_HOME}/${PKG_CONFIG_LIB_DIR}/pkgconfig"
 
@@ -118,6 +119,7 @@ RUN set -eux; \
 	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		tzdata \
+		tree \
 		git \
 		make \
 		cmake \
@@ -142,22 +144,28 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*; \
 	mkdir -p /usr/src;
 
+#################################################################################################
+
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/nginx/nginx /usr/src/nginx; \
 	cd /usr/src/nginx; \
 	git checkout --force --quiet ${NGINX_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
 ### ngx_http_brotli_static_module.so;
 ### ngx_http_brotli_filter_module.so;
+
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli; \
 	cd /usr/src/ngx_brotli; \
 	git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
 ### ngx_http_zstd_static_module.so;
 ### ngx_http_zstd_filter_module.so;
+
 #RUN set -eux; \
 #	git clone --recurse-submodules https://github.com/tokers/zstd-nginx-module /usr/src/zstd-nginx-module; \
 #	cd /usr/src/zstd-nginx-module; \
@@ -170,28 +178,37 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGX_ZSTD_LEE_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
 ### ngx_http_geoip2_module.so
 ### ngx_stream_geoip2_module.so
+
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/leev/ngx_http_geoip2_module /usr/src/ngx_http_geoip2_module; \
 	cd /usr/src/ngx_http_geoip2_module; \
 	git checkout --force --quiet ${NGX_GEOIP2_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
 ### ngx_http_headers_more_filter_module.so
+
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/openresty/headers-more-nginx-module /usr/src/headers-more-nginx-module; \
 	cd /usr/src/headers-more-nginx-module; \
 	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
 ### ngx_http_tcp_brutal_module.so
+
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
 	cd /usr/src/brutal-nginx; \
 	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+#################################################################################################
+### ngx_http_js_module.so;
+### ngx_stream_js_module.so;
 
 ### ARG QJS_CC_OPT="-I/usr/src/quickjs"
 ### ARG QJS_LD_OPT="-L/usr/src/quickjs"
@@ -209,6 +226,7 @@ RUN set -eux; \
 ###### meson
 ARG QJS_CC_OPT=""
 ARG QJS_LD_OPT=""
+######
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/quickjs-ng/quickjs /usr/src/quickjs; \
 	cd /usr/src/quickjs; \
@@ -220,13 +238,18 @@ RUN set -eux; \
 	meson compile -C build; \
     meson install -C build;
 
-### ngx_http_js_module.so;
-### ngx_stream_js_module.so;
 RUN set -eux; \
 	git clone --recurse-submodules https://github.com/nginx/njs /usr/src/njs; \
 	cd /usr/src/njs; \
 	git checkout --force --quiet ${NJS_COMMIT_ID}; \
 	git submodule update --init --recursive;
+
+#################################################################################################
+
+#RUN set -eux; \
+#	tree ${PKG_CONFIG_HOME};
+
+#################################################################################################
 
 # Nginx不作为被依赖的共享库，无需-fPIC
 # Nginx Core + Dynamic Modules
