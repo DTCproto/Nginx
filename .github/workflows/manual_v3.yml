@@ -44,7 +44,7 @@ jobs:
       default_branch: ${{ steps.set_global_params.outputs.default_branch }}
       ngx_brotli_commit_id: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
-      ngx_zstd_lee_commit_id: "87f3302e72e0faf721db0cc9462d0a9b960e4061"
+      ngx_zstd_lee_commit_id: "ff4e53b734251a46a00fb77645938e9af8a4c27b"
       ngx_headers_more_commit_id: "v0.39"
       njs_commit_id: "2781bceba754db0793c55435a56a0dd2248a697b"
       quickjs_commit_id: "f1139494d18a2053630c5ed3384a42bb70db3c53"
