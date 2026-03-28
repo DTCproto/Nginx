@@ -7,7 +7,7 @@ on:
       nginx_commit_id:
         description: "指定nginx使用commit id版本"
         required: true
-        default: "release-1.29.6"
+        default: "release-1.29.7"
         type: string
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
@@ -44,10 +44,10 @@ jobs:
       default_branch: ${{ steps.set_global_params.outputs.default_branch }}
       ngx_brotli_commit_id: "a71f9312c2deb28875acc7bacfdd5695a111aa53"
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
-      ngx_zstd_lee_commit_id: "ff4e53b734251a46a00fb77645938e9af8a4c27b"
+      ngx_zstd_lee_commit_id: "09ce44eb68bccaa855206f7316fa0219a54bea3f"
       ngx_headers_more_commit_id: "v0.39"
-      njs_commit_id: "2781bceba754db0793c55435a56a0dd2248a697b"
-      quickjs_commit_id: "f1139494d18a2053630c5ed3384a42bb70db3c53"
+      njs_commit_id: "8f42e991a2528ed64663599ffd76e66988b8f126"
+      quickjs_commit_id: "d7ae12ae71dfd6ab2997527d295014a8996fa0f9"
       quickjs_ng_commit_id: "v0.11.0"
       ACTOR_LC: ${{ steps.set_case_params.outputs.ACTOR_LC }}
       REPOSITORY_LC: ${{ steps.set_case_params.outputs.REPOSITORY_LC }}
