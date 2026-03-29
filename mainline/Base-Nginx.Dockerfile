@@ -305,6 +305,11 @@ RUN set -eux; \
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:/usr/boringssl/lib"
 
+ENV TZ=Asia/Shanghai
+ENV LC_TIME=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
 LABEL \
 	description="Nginx Docker Build with BoringSSL" \
 	maintainer="Custom Auto Build" \
