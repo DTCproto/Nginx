@@ -7,12 +7,12 @@ on:
       nginx_commit_id:
         description: "指定nginx使用commit id版本"
         required: true
-        default: "release-1.29.7"
+        default: "release-1.29.8"
         type: string
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
         required: true
-        default: "0.20260327.0"
+        default: "0.20260413.0"
         type: string
       build_ssl:
         description: "enable ssl build"
@@ -46,7 +46,7 @@ jobs:
       ngx_zstd_commit_id: "057a7d339af1111d04b5a9ac5ae9b0250d17cd94"
       ngx_zstd_lee_commit_id: "09ce44eb68bccaa855206f7316fa0219a54bea3f"
       ngx_headers_more_commit_id: "v0.39"
-      njs_commit_id: "8f42e991a2528ed64663599ffd76e66988b8f126"
+      njs_commit_id: "0.9.6"
       quickjs_commit_id: "d7ae12ae71dfd6ab2997527d295014a8996fa0f9"
       quickjs_ng_commit_id: "v0.11.0"
       ACTOR_LC: ${{ steps.set_case_params.outputs.ACTOR_LC }}
