@@ -145,6 +145,13 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGINX_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+# 补丁
+COPY ngx-ECH-support-BoringSSL.1.30.0.patch /opt/build/patch/ngx-001.patch
+
+RUN set -eux; \
+	cd /usr/src/nginx; \
+	patch -p1 < /opt/build/patch/ngx-001.patch;
+
 #################################################################################################
 ### ngx_http_brotli_static_module.so;
 ### ngx_http_brotli_filter_module.so;
