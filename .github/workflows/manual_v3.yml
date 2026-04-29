@@ -7,7 +7,7 @@ on:
       nginx_commit_id:
         description: "指定nginx使用commit id版本"
         required: true
-        default: "release-1.29.8"
+        default: "release-1.30.0"
         type: string
       ssl_commit_id:
         description: "指定BoringSSL使用commit id版本"
@@ -115,14 +115,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Install APT dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: git curl wget
+      - name: Install System Tools
+        run: |
+          sudo apt install -y git curl wget tree subversion
 
       - name: init
         run: |
           cp -rf ${{ github.workspace }}/conf/* ${{ github.workspace }}/mainline/
+          cp -rf ${{ github.workspace }}/patch/* ${{ github.workspace }}/mainline/
           ls ${{ github.workspace }}/mainline/
 
       - name: Login to Docker Hub

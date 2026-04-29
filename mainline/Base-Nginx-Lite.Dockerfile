@@ -145,7 +145,7 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGINX_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
-# 补丁
+# ECH补丁
 COPY ngx-ECH-support-BoringSSL.1.30.0.patch /opt/build/patch/ngx-001.patch
 
 RUN set -eux; \
