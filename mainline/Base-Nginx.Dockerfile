@@ -24,9 +24,6 @@ ARG QUICKJS_NG_COMMIT_ID="HEAD~0"
 ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
-ARG QJS_CC_OPT=""
-ARG QJS_LD_OPT=""
-
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
 
 ARG PKG_CONFIG_HOME="/usr/src/pkgs"

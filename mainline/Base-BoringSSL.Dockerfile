@@ -29,7 +29,7 @@ RUN set -eux; \
 # -j$(getconf _NPROCESSORS_ONLN) | -j"$(nproc)"
 RUN set -eux; \
 	# git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl; \
-	git clone --recurse-submodules https://github.com/google/boringssl.git /usr/src/boringssl; \
+	git clone --recurse-submodules https://github.com/google/boringssl /usr/src/boringssl; \
 	cd /usr/src/boringssl; \
 	git checkout --force --quiet ${BORINGSSL_COMMIT_ID}; \
 	git submodule update --init --recursive; \
