@@ -20,6 +20,10 @@ ARG NGX_TCP_BRUTAL_COMMIT_ID="HEAD~0"
 ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt -Wformat -Werror=format-security -pipe -fno-semantic-interposition -fno-strict-aliasing -fomit-frame-pointer"
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
+# 临时忽略补丁带来的警告异常
+ARG NGINX_CC_OPT_EXT_NO_ERROR="-Wno-error=array-bounds"
+ARG NGINX_LD_OPT_EXT_NO_ERROR=""
+
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
 
 ARG PKG_CONFIG_HOME="/usr/src/pkgs"
@@ -219,8 +223,8 @@ RUN set -eux; \
 	./auto/configure ${NGINX_BASE_CONFIG} ${NGINX_CORE_MODULES} ${NGINX_DYNAMIC_MODULES} ${NGINX_DYNAMIC_MODULES_EXTERNAL} \
 	--build="Nginx With Dynamic Modules[SSL Static]" \
 	--with-cc=c++ \
-	--with-cc-opt="${NGINX_CC_OPT} -I/usr/boringssl/include -x c" \
-	--with-ld-opt="${NGINX_LD_OPT} -L/usr/boringssl/lib"; \
+	--with-cc-opt="${NGINX_CC_OPT} ${NGINX_CC_OPT_EXT_NO_ERROR} -I/usr/boringssl/include -x c" \
+	--with-ld-opt="${NGINX_LD_OPT} ${NGINX_LD_OPT_EXT_NO_ERROR} -L/usr/boringssl/lib"; \
 	make -j"$(nproc)"; \
 	make install;
 
