@@ -21,7 +21,7 @@ ARG NGINX_CC_OPT="-O2 -fstack-protector-strong -fstack-clash-protection -fno-plt
 ARG NGINX_LD_OPT="-Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -Wl,--hash-style=gnu -Wl,--strip-all"
 
 # 临时忽略补丁带来的警告异常
-ARG NGINX_CC_OPT_EXT_NO_ERROR="-Wno-error=array-bounds"
+ARG NGINX_CC_OPT_EXT_NO_ERROR=""
 ARG NGINX_LD_OPT_EXT_NO_ERROR=""
 
 ARG NGINX_MODULES_PATH="/usr/lib/nginx/modules"
