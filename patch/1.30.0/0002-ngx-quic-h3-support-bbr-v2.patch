@@ -1,7 +1,7 @@
-From cd7f1b342f216fe368379ad82e0181d5987e56b4 Mon Sep 17 00:00:00 2001
+From 63d6a43d055fd74e22260443495f0a32a561f214 Mon Sep 17 00:00:00 2001
 From: local <local@local>
-Date: Sun, 10 May 2026 13:50:33 +0800
-Subject: [PATCH] quic h3 support bbr v1
+Date: Sun, 10 May 2026 17:23:32 +0800
+Subject: [PATCH] quic h3 support bbr v2
 
 ---
  auto/modules                               |    8 +
@@ -12,16 +12,16 @@ Subject: [PATCH] quic h3 support bbr v1
  src/event/quic/ngx_event_quic_bbr.h        |   18 +
  src/event/quic/ngx_event_quic_brutal.c     |  384 ++++++++
  src/event/quic/ngx_event_quic_brutal.h     |   18 +
- src/event/quic/ngx_event_quic_cc.c         |  495 ++++++++++
+ src/event/quic/ngx_event_quic_cc.c         |  504 ++++++++++
  src/event/quic/ngx_event_quic_cc.h         |   91 ++
  src/event/quic/ngx_event_quic_connection.h |    5 +
  src/event/quic/ngx_event_quic_migration.c  |   11 +-
- src/event/quic/ngx_event_quic_output.c     |  108 +-
- src/event/quic/ngx_event_quic_sampler.c    |  457 +++++++++
+ src/event/quic/ngx_event_quic_output.c     |  112 ++-
+ src/event/quic/ngx_event_quic_sampler.c    |  464 +++++++++
  src/event/quic/ngx_event_quic_sampler.h    |  103 ++
  src/event/quic/ngx_event_quic_transport.h  |   13 +
  src/http/v3/ngx_http_v3_module.c           |  138 +++
- 17 files changed, 3147 insertions(+), 31 deletions(-)
+ 17 files changed, 3167 insertions(+), 31 deletions(-)
  create mode 100644 src/event/quic/ngx_event_quic_bbr.c
  create mode 100644 src/event/quic/ngx_event_quic_bbr.h
  create mode 100644 src/event/quic/ngx_event_quic_brutal.c
@@ -2050,10 +2050,10 @@ index 000000000..044f9153a
 +#endif /* _NGX_EVENT_QUIC_BRUTAL_H_INCLUDED_ */
 diff --git a/src/event/quic/ngx_event_quic_cc.c b/src/event/quic/ngx_event_quic_cc.c
 new file mode 100644
-index 000000000..b5f3b2e18
+index 000000000..041905213
 --- /dev/null
 +++ b/src/event/quic/ngx_event_quic_cc.c
-@@ -0,0 +1,495 @@
+@@ -0,0 +1,504 @@
 +/*
 + * Copyright (C) Nginx, Inc.
 + */
@@ -2113,6 +2113,9 @@ index 000000000..b5f3b2e18
 +    ngx_quic_connection_t  *qc;
 +
 +    qc = ngx_quic_get_connection(c);
++    if (qc == NULL) {
++        return NGX_ERROR;
++    }
 +
 +    ngx_quic_sampler_init(c);
 +    ngx_quic_pacer_init(&qc->cc.pacer, NGX_QUIC_MIN_INITIAL_SIZE);
@@ -2146,6 +2149,9 @@ index 000000000..b5f3b2e18
 +    ngx_quic_connection_t  *qc;
 +
 +    qc = ngx_quic_get_connection(c);
++    if (qc == NULL) {
++        return;
++    }
 +
 +    ngx_quic_sampler_reset_path(c);
 +    ngx_quic_pacer_init(&qc->cc.pacer, NGX_QUIC_MIN_INITIAL_SIZE);
@@ -2409,6 +2415,9 @@ index 000000000..b5f3b2e18
 +    ngx_quic_connection_t  *qc;
 +
 +    qc = ngx_quic_get_connection(c);
++    if (qc == NULL) {
++        return;
++    }
 +
 +    ngx_memzero(&qc->congestion, sizeof(ngx_quic_congestion_t));
 +
@@ -2703,7 +2712,7 @@ index 42354ca66..2c94a581f 100644
      if (path->mtu_unvalidated) {
          path->mtu_unvalidated = 0;
 diff --git a/src/event/quic/ngx_event_quic_output.c b/src/event/quic/ngx_event_quic_output.c
-index f98c834a1..2ba4dda82 100644
+index f98c834a1..e5c7e6706 100644
 --- a/src/event/quic/ngx_event_quic_output.c
 +++ b/src/event/quic/ngx_event_quic_output.c
 @@ -48,11 +48,13 @@ static ngx_int_t ngx_quic_create_datagrams(ngx_connection_t *c);
@@ -2787,7 +2796,7 @@ index f98c834a1..2ba4dda82 100644
                  cg->in_flight += f->plen;
  
              } else {
-@@ -273,6 +292,24 @@ ngx_quic_revert_send(ngx_connection_t *c, uint64_t pnum[NGX_QUIC_SEND_CTX_LAST])
+@@ -273,6 +292,28 @@ ngx_quic_revert_send(ngx_connection_t *c, uint64_t pnum[NGX_QUIC_SEND_CTX_LAST])
  }
  
  
@@ -2801,7 +2810,11 @@ index f98c834a1..2ba4dda82 100644
 +
 +    delay = ngx_quic_cc_time_until_send(c, now);
 +
-+    if (delay == 0 || delay == NGX_TIMER_INFINITE) {
++    if (delay == NGX_TIMER_INFINITE) {
++        return;
++    }
++
++    if (delay == 0) {
 +        delay = 1;
 +    }
 +
@@ -2812,7 +2825,7 @@ index f98c834a1..2ba4dda82 100644
  #if ((NGX_HAVE_UDP_SEGMENT) && (NGX_HAVE_MSGHDR_MSG_CONTROL))
  
  static ngx_uint_t
-@@ -295,6 +332,14 @@ ngx_quic_allow_segmentation(ngx_connection_t *c)
+@@ -295,6 +336,14 @@ ngx_quic_allow_segmentation(ngx_connection_t *c)
          return 0;
      }
  
@@ -2827,7 +2840,7 @@ index f98c834a1..2ba4dda82 100644
      ctx = ngx_quic_get_send_ctx(qc, NGX_QUIC_ENCRYPTION_INITIAL);
      if (!ngx_queue_empty(&ctx->frames)) {
          return 0;
-@@ -318,11 +363,13 @@ ngx_quic_allow_segmentation(ngx_connection_t *c)
+@@ -318,11 +367,13 @@ ngx_quic_allow_segmentation(ngx_connection_t *c)
  
          bytes += f->len;
  
@@ -2843,7 +2856,7 @@ index f98c834a1..2ba4dda82 100644
              /* require at least ~3 full packets to batch */
              return 1;
          }
-@@ -369,7 +416,10 @@ ngx_quic_create_segments(ngx_connection_t *c)
+@@ -369,7 +420,10 @@ ngx_quic_create_segments(ngx_connection_t *c)
  
          len = ngx_min(segsize, (size_t) (end - p));
  
@@ -2855,7 +2868,7 @@ index f98c834a1..2ba4dda82 100644
  
              n = ngx_quic_output_packet(c, ctx, p, len, len, 0);
              if (n == NGX_ERROR) {
-@@ -393,6 +443,19 @@ ngx_quic_create_segments(ngx_connection_t *c)
+@@ -393,6 +447,19 @@ ngx_quic_create_segments(ngx_connection_t *c)
              n = ngx_quic_send_segments(c, dst, p - dst, path->sockaddr,
                                         path->socklen, segsize);
              if (n == NGX_ERROR) {
@@ -2875,7 +2888,7 @@ index f98c834a1..2ba4dda82 100644
                  return NGX_ERROR;
              }
  
-@@ -412,6 +475,12 @@ ngx_quic_create_segments(ngx_connection_t *c)
+@@ -412,6 +479,12 @@ ngx_quic_create_segments(ngx_connection_t *c)
          }
      }
  
@@ -2888,7 +2901,7 @@ index f98c834a1..2ba4dda82 100644
      return NGX_OK;
  }
  
-@@ -479,6 +548,25 @@ ngx_quic_send_segments(ngx_connection_t *c, u_char *buf, size_t len,
+@@ -479,6 +552,25 @@ ngx_quic_send_segments(ngx_connection_t *c, u_char *buf, size_t len,
      return n;
  }
  
@@ -2914,7 +2927,7 @@ index f98c834a1..2ba4dda82 100644
  #endif
  
  
-@@ -1296,7 +1384,10 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
+@@ -1296,7 +1388,10 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
                     "quic sendto %s packet max:%uz min:%uz",
                     ngx_quic_level_name(ctx->level), max, min);
  
@@ -2926,7 +2939,7 @@ index f98c834a1..2ba4dda82 100644
          ngx_quic_free_frame(c, frame);
          return NGX_AGAIN;
      }
-@@ -1367,6 +1458,7 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
+@@ -1367,6 +1462,7 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
      if (frame->need_ack && !qc->closing) {
          ngx_queue_insert_tail(&ctx->sent, &frame->queue);
  
@@ -2936,10 +2949,10 @@ index f98c834a1..2ba4dda82 100644
      } else {
 diff --git a/src/event/quic/ngx_event_quic_sampler.c b/src/event/quic/ngx_event_quic_sampler.c
 new file mode 100644
-index 000000000..359f4676e
+index 000000000..2724f6264
 --- /dev/null
 +++ b/src/event/quic/ngx_event_quic_sampler.c
-@@ -0,0 +1,457 @@
+@@ -0,0 +1,464 @@
 +/*
 + * Copyright (C) Nginx, Inc.
 + */
@@ -2966,6 +2979,9 @@ index 000000000..359f4676e
 +    ngx_quic_connection_t  *qc;
 +
 +    qc = ngx_quic_get_connection(c);
++    if (qc == NULL) {
++        return;
++    }
 +
 +    ngx_memzero(&qc->sampler, sizeof(ngx_quic_sampler_t));
 +
@@ -3210,6 +3226,10 @@ index 000000000..359f4676e
 +    ngx_quic_connection_t  *qc;
 +
 +    qc = ngx_quic_get_connection(c);
++    if (qc == NULL) {
++        return;
++    }
++
 +    sampler = &qc->sampler;
 +
 +    ngx_memzero(sampler->ack_height_filter,
