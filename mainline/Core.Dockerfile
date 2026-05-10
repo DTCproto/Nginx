@@ -7,36 +7,36 @@ FROM ${BASE_IMAGE} AS builder
 # find /usr/lib/nginx/modules -type f -exec sh extract-libs.sh {} /deps \;
 
 # 提取 ELF 依赖到 /deps，避免重复复制
-COPY extract-libs.sh /extract-libs.sh
-COPY exclude-libs.txt /exclude-libs.txt
-COPY extract-perl-modules.sh /extract-perl-modules.sh
+COPY tools/extract-libs.sh /opt/tools/extract-libs.sh
+COPY tools/exclude-libs.txt /opt/tools/exclude-libs.txt
+COPY tools/extract-perl-modules.sh /opt/tools/extract-perl-modules.sh
 
 RUN set -eux; \
-	chmod +x /extract-libs.sh; \
-	chmod +x /extract-perl-modules.sh; \
+	chmod +x /opt/tools/extract-libs.sh; \
+	chmod +x /opt/tools/extract-perl-modules.sh; \
 	ls -al /usr/lib/nginx/modules/; \
 	mkdir -p /deps; \
 	### 主程序
-	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/sbin/nginx /deps; \
+	EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/sbin/nginx /deps; \
 	### module
-	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
-	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_static_module.so /deps; \
-	EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_filter_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip2_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip2_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_tcp_brutal_module.so /deps; \
+	EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_static_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_brotli_filter_module.so /deps; \
+	EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_static_module.so /deps; \
+	EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_zstd_filter_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip2_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip2_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_tcp_brutal_module.so /deps; \
 	### 【ngx_http_image_filter_module依赖非常多】
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
 	### 【ngx_http_perl_module需要额外依赖库】
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_perl_module.so /deps; \
 	# EXTRA_DIRS="/usr/lib/perl5/vendor_perl" /extract-perl-modules.sh /deps; \
 	### 【only SSL Shared】
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_mail_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
-	# EXCLUDE_FILE=/exclude-libs.txt /extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_mail_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_js_module.so /deps; \
+	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_stream_js_module.so /deps; \
 	ls -al /deps/usr/sbin/nginx; \
 	ls -al /deps/usr/lib/nginx/modules/;
 
@@ -79,8 +79,8 @@ COPY --from=builder /usr/share/nginx /usr/share/nginx
 # 拷贝自定义的 NGINX 配置文件
 # COPY --from=builder /etc/nginx/nginx.conf /etc/nginx/nginx.conf
 # COPY --from=builder /etc/nginx/start.sh /etc/nginx/start.sh
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY start.sh /etc/nginx/start.sh
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+COPY conf/start.sh /etc/nginx/start.sh
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:/usr/boringssl/lib"
 

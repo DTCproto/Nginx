@@ -149,12 +149,13 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGINX_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
-# ECH补丁
-COPY ngx-ECH-support-BoringSSL.1.30.0.patch /opt/build/patch/ngx-001.patch
+# ECH BoringSSL 补丁
+# H3 BBR 补丁
+COPY patch/1.30.0/*.patch /opt/build/patch/
 
 RUN set -eux; \
 	cd /usr/src/nginx; \
-	patch -p1 < /opt/build/patch/ngx-001.patch;
+	find /opt/build/patch/ -name "*.patch" | sort | xargs -I {} bash -c 'patch -p1 -N < "{}"';
 
 #################################################################################################
 ### ngx_http_brotli_static_module.so;
@@ -284,8 +285,8 @@ RUN set -eux; \
 # 配置环境变量和工作目录
 WORKDIR /etc/nginx
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY start.sh /etc/nginx/start.sh
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+COPY conf/start.sh /etc/nginx/start.sh
 
 RUN set -eux; \
 	ln -s ${NGINX_MODULES_PATH} /etc/nginx/modules; \

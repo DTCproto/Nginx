@@ -1,14 +1,14 @@
-From af086152d65924c0b88783e83fb91c61992028ad Mon Sep 17 00:00:00 2001
+From 5d8be0c1c6bb516500d9b97167ec0504aa6b318a Mon Sep 17 00:00:00 2001
 From: local <local@local>
-Date: Wed, 29 Apr 2026 14:32:02 +0800
-Subject: [PATCH] ECH support  BoringSSL
+Date: Sun, 10 May 2026 13:56:53 +0800
+Subject: [PATCH] ech support boringssl v1
 
 ---
  src/event/ngx_event_openssl.c | 351 +++++++++++++++++++++++++++++-----
  1 file changed, 307 insertions(+), 44 deletions(-)
 
 diff --git a/src/event/ngx_event_openssl.c b/src/event/ngx_event_openssl.c
-index 1653be0c3..d1f22383d 100644
+index 99ec65444..6f232fc2c 100644
 --- a/src/event/ngx_event_openssl.c
 +++ b/src/event/ngx_event_openssl.c
 @@ -16,6 +16,28 @@
@@ -404,7 +404,7 @@ index 1653be0c3..d1f22383d 100644
  
  #else
      if (filenames != NULL) {
-@@ -5801,7 +6052,14 @@ ngx_ssl_get_alpn_protocol(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
+@@ -5818,7 +6069,14 @@ ngx_ssl_get_alpn_protocol(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
  ngx_int_t
  ngx_ssl_get_ech_status(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
  {
@@ -420,7 +420,7 @@ index 1653be0c3..d1f22383d 100644
      int    echrv;
      char  *inner_sni, *outer_sni;
  
-@@ -5841,7 +6099,10 @@ ngx_int_t
+@@ -5858,7 +6116,10 @@ ngx_int_t
  ngx_ssl_get_ech_outer_server_name(ngx_connection_t *c, ngx_pool_t *pool,
      ngx_str_t *s)
  {
@@ -432,7 +432,7 @@ index 1653be0c3..d1f22383d 100644
      int    echrv;
      char  *inner_sni, *outer_sni;
  
-@@ -5855,6 +6116,8 @@ ngx_ssl_get_ech_outer_server_name(ngx_connection_t *c, ngx_pool_t *pool,
+@@ -5872,6 +6133,8 @@ ngx_ssl_get_ech_outer_server_name(ngx_connection_t *c, ngx_pool_t *pool,
  
          s->data = ngx_pnalloc(pool, s->len);
          if (s->data == NULL) {
