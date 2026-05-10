@@ -121,8 +121,11 @@ jobs:
 
       - name: init
         run: |
+          mkdir -p ${{ github.workspace }}/mainline/conf/
           cp -rf ${{ github.workspace }}/conf/* ${{ github.workspace }}/mainline/conf/
+          mkdir -p ${{ github.workspace }}/mainline/patch/
           cp -rf ${{ github.workspace }}/patch/* ${{ github.workspace }}/mainline/patch/
+          mkdir -p ${{ github.workspace }}/mainline/tools/
           cp -rf ${{ github.workspace }}/tools/* ${{ github.workspace }}/mainline/tools/
           tree ${{ github.workspace }}/mainline/
 
