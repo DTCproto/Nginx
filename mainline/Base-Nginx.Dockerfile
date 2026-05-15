@@ -5,6 +5,8 @@ FROM ${BASE_IMAGE} AS builder
 ARG NGINX_COMMIT_ID="HEAD~0"
 ARG BORINGSSL_COMMIT_ID="HEAD~0"
 
+ARG NGINX_PATCH_LIBS="native"
+
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
 
 ARG NGX_ZSTD_COMMIT_ID="HEAD~0"
@@ -155,7 +157,7 @@ RUN set -eux; \
 
 # ECH BoringSSL 补丁
 # H3 BBR 补丁
-COPY patch/1.30.0/*.patch /opt/build/patch/
+COPY patch/${NGINX_PATCH_LIBS}/* /opt/build/patch/
 
 RUN set -eux; \
 	cd /usr/src/nginx; \

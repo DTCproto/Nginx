@@ -14,6 +14,13 @@ on:
         required: true
         default: "0.20260508.0"
         type: string
+      nginx_patch_libs:
+        description: "use nginx patch libs"
+        default: "1.30.0"
+        type: choice
+        options:
+          - "1.30.0"
+          - "native"
       build_ssl:
         description: "enable ssl build"
         default: true
@@ -187,6 +194,7 @@ jobs:
           build-args: |
             NGINX_COMMIT_ID=${{ inputs.nginx_commit_id }}
             BORINGSSL_COMMIT_ID=${{ inputs.ssl_commit_id }}
+            NGINX_PATCH_LIBS=${{ inputs.nginx_patch_libs }}
             NGX_BROTLI_COMMIT_ID=${{ needs.pre.outputs.ngx_brotli_commit_id }}
             NGX_ZSTD_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_commit_id }}
             NGX_ZSTD_LEE_COMMIT_ID=${{ needs.pre.outputs.ngx_zstd_lee_commit_id }}
