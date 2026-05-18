@@ -27,7 +27,6 @@ RUN set -eux; \
 	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so /deps; \
 	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_geoip2_module.so /deps; \
 	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_stream_geoip2_module.so /deps; \
-	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_tcp_brutal_module.so /deps; \
 	### 【ngx_http_image_filter_module依赖非常多】
 	# EXCLUDE_FILE=/opt/tools/exclude-libs.txt /opt/tools/extract-libs.sh /usr/lib/nginx/modules/ngx_http_image_filter_module.so /deps; \
 	### 【ngx_http_perl_module需要额外依赖库】

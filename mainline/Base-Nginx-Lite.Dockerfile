@@ -8,6 +8,7 @@ ARG BORINGSSL_COMMIT_ID="HEAD~0"
 ARG NGINX_PATCH_LIBS="native"
 
 ARG NGX_BROTLI_COMMIT_ID="HEAD~0"
+ARG BROTLI_LIB_COMMIT_ID="v1.2.0"
 
 ARG NGX_ZSTD_COMMIT_ID="HEAD~0"
 ARG NGX_ZSTD_LEE_COMMIT_ID="HEAD~0"
@@ -96,7 +97,6 @@ ARG NGINX_DYNAMIC_MODULES_EXTERNAL="\
 		--add-dynamic-module=/usr/src/zstd-nginx-module \
 		--add-dynamic-module=/usr/src/ngx_http_geoip2_module \
 		--add-dynamic-module=/usr/src/headers-more-nginx-module \
-		--add-dynamic-module=/usr/src/brutal-nginx \
 	"
 
 # gnupg 仅在验证 GPG 签名时需要
@@ -166,6 +166,12 @@ RUN set -eux; \
 	git checkout --force --quiet ${NGX_BROTLI_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
+# 更新依赖版本
+RUN set -eux; \
+	cd /usr/src/ngx_brotli/deps/brotli; \
+	git fetch --all; \
+	git checkout --force --quiet ${BROTLI_LIB_COMMIT_ID};
+
 #################################################################################################
 ### ngx_http_zstd_static_module.so;
 ### ngx_http_zstd_filter_module.so;
@@ -199,15 +205,6 @@ RUN set -eux; \
 	git clone --recurse-submodules https://github.com/openresty/headers-more-nginx-module /usr/src/headers-more-nginx-module; \
 	cd /usr/src/headers-more-nginx-module; \
 	git checkout --force --quiet ${NGX_HEADERS_MORE_COMMIT_ID}; \
-	git submodule update --init --recursive;
-
-#################################################################################################
-### ngx_http_tcp_brutal_module.so
-
-RUN set -eux; \
-	git clone --recurse-submodules https://github.com/sduoduo233/brutal-nginx /usr/src/brutal-nginx; \
-	cd /usr/src/brutal-nginx; \
-	git checkout --force --quiet ${NGX_TCP_BRUTAL_COMMIT_ID}; \
 	git submodule update --init --recursive;
 
 #################################################################################################
